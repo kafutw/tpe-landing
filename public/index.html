@@ -39,6 +39,9 @@ li{margin:4px 0}
 .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .btn{flex:1 1 auto;text-align:center;padding:10px 14px;border-radius:12px;border:1px solid var(--brand);color:var(--brand);text-decoration:none;font-weight:700;font-size:15px;background:#fff;cursor:pointer}
 .btn.solid{background:var(--brand);color:#fff}
+.ansreload{display:block;margin:14px auto 0;flex:none;padding:9px 22px}
+.btn:disabled{opacity:.6;cursor:default}
+
 .mapcard{padding:14px 14px 12px}
 #map{height:460px;border-radius:12px;overflow:hidden;background:#eef2f2;z-index:0}
 .lb{position:absolute;display:block;white-space:nowrap;padding:3px 7px 3px;border-radius:9px;font-size:12px;font-weight:700;line-height:1.25;box-shadow:0 1px 4px rgba(0,0,0,.2);text-align:center}
@@ -66,12 +69,13 @@ li{margin:4px 0}
   /* A 寬版單欄：答案橫幅、地圖加大、說明兩欄 */
   .lay-a main{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
   .lay-a main>h1,.lay-a main>.lead,.lay-a #answer,.lay-a #mapcard,.lay-a footer,.lay-a .embedfoot{grid-column:1/-1}
-  .lay-a #answer{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto auto;column-gap:36px;text-align:left;padding:22px 32px}
+  .lay-a #answer{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto auto auto;column-gap:36px;text-align:left;padding:22px 32px}
   .lay-a #answer .k{grid-column:1;grid-row:1}
   .lay-a #answer .side{grid-column:1;grid-row:2 / span 3;font-size:56px;align-self:center;margin:0}
   .lay-a #answer .spots{grid-column:2;grid-row:1 / span 2;align-self:end;font-size:22px;margin:0}
   .lay-a #answer .why{grid-column:2;grid-row:3}
   .lay-a #answer .meta{grid-column:2;grid-row:4;justify-content:flex-start;margin-top:8px}
+  .lay-a #answer .ansreload{grid-column:3;grid-row:1 / span 4;align-self:center;margin:0;padding:12px 26px;font-size:16px}
   .lay-a #map{height:600px}
 }
 }
@@ -101,6 +105,7 @@ footer a,.small a{color:var(--brand-d)}
     <p class="spots" id="spots"></p>
     <p class="why" id="why"></p>
     <div class="meta" id="meta"></div>
+    <button class="btn solid js-reload ansreload" type="button">↻ 重新整理</button>
   </section>
 
   <section class="card mapcard" id="mapcard">
@@ -121,7 +126,7 @@ footer a,.small a{color:var(--brand-d)}
     <p class="small" id="wind"></p>
     <div class="btns">
       <a class="btn" href="https://www.flightradar24.com/25.08,121.23/12" target="_blank" rel="noopener">用 Flightradar24 再確認</a>
-      <button class="btn solid" id="reload" type="button">重新整理</button>
+      <button class="btn solid js-reload" id="reload" type="button">↻ 重新整理</button>
     </div>
   </section>
 
@@ -279,8 +284,8 @@ function startPoll(before) {
   }, 20000);
 }
 async function load(manual) {
-  const btn = document.getElementById('reload');
-  if (manual && btn) { btn.textContent = '查詢中…'; btn.disabled = true; }
+  const btns = document.querySelectorAll('.js-reload');
+  if (manual) btns.forEach(b => { b.textContent = '查詢中…'; b.disabled = true; });
   let shown = null;
   // 1) 先畫 GitHub 已有的那份（同網域，很快），畫面不會卡在讀取中
   const gh = fromGitHub().then(d => { if (!shown) { shown = d; render(d); } }).catch(() => {});
@@ -296,15 +301,14 @@ async function load(manual) {
       document.getElementById('why').textContent = '網路不穩的話，可以先用 Flightradar24 看一眼。';
     }
   } finally {
-    if (btn) { btn.textContent = '重新整理'; btn.disabled = false; }
+    btns.forEach(b => { b.textContent = '↻ 重新整理'; b.disabled = false; });
   }
 }
 drawMap(null, []);   // 地圖先畫出來，不等資料
 // 嵌在文章裡時，把內容高度告訴外層頁面，讓 iframe 自動配合
 function postH() { if (window.parent !== window) window.parent.postMessage({tpeLandingH: document.querySelector('main').scrollHeight + 8}, '*'); }
 if (document.documentElement.classList.contains('embed')) { new ResizeObserver(postH).observe(document.querySelector('main')); window.addEventListener('load', postH); }
-const RB = document.getElementById('reload');
-if (RB) RB.addEventListener('click', () => load(true));
+document.querySelectorAll('.js-reload').forEach(b => b.addEventListener('click', () => load(true)));
 load(false);
 setInterval(() => { if (!POLL) load(false); }, 120000);
 </script>
