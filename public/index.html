@@ -105,11 +105,21 @@ li{margin:4px 0}
 .install .btn{display:none;max-width:280px}
 .can-install .install .btn{display:block}
 .embed .install,.standalone .install{display:none}
-.embed body{background:#fff}
-.embed main{padding:0;max-width:none}
+
+.apphead{display:none}
+.embed .apphead{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:2px 4px}
+.apphead img{width:34px;height:34px;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.apphead .t{font-weight:800;font-size:16px;line-height:1.25;color:var(--ink)}
+.apphead .t small{display:block;font-weight:600;font-size:12.5px;color:var(--sub)}
+.apphead .live{margin-left:auto;font-size:12.5px;font-weight:700;color:#1f7a4d;background:#dff3e7;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.apphead .live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fa866;margin-right:6px;vertical-align:1px;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.embed .card{box-shadow:0 1px 3px rgba(20,60,64,.08)}
+.embed body{background:#e3eff0}
+.embed main{padding:12px 12px 6px;max-width:none}
 .embed h1,.embed .lead,.embed .explain,.embed footer{display:none}
 .embed .card{margin-bottom:10px}
-.embed #map{height:360px}
+.embed #map{height:470px}
 .embedfoot{display:none;text-align:center;font-size:13px;color:var(--sub);margin:4px 0 2px}
 .embed .embedfoot{display:block}
 .embedfoot a{color:var(--brand-d);font-weight:700}
@@ -122,6 +132,7 @@ footer a,.small a{color:var(--brand-d)}
 </head>
 <body>
 <main>
+  <div class="apphead"><img src="icon-192.png" alt=""><div class="t">看降落<small>桃園機場現在從哪邊降落？即時查詢</small></div><span class="live">即時</span></div>
   <h1>桃園機場現在從哪邊降落？</h1>
   <p class="lead">去桃園看飛機之前先查一次，就知道今天要去西南側還是東北側，比較不會撲空。</p>
 
@@ -248,7 +259,7 @@ function drawMap(rw, ev) {
   if (rw === '23') pts.push(off(RWY[0][1], 3.6), off(RWY[1][1], 3.6));
   (ev || []).filter(e => e.lat && e.dist_km <= 12).forEach(e => pts.push([e.lat, e.lon]));
   const key = rw + ((ev || []).length ? '+' : '');
-  if (MAP._kfrw !== key) { MAP.fitBounds(L.latLngBounds(pts).pad(0.08)); MAP._kfrw = key; }
+  if (MAP._kfrw !== key) { MAP.fitBounds(L.latLngBounds(pts), {padding: [46, 46]}); MAP._kfrw = key; }
   if (rw) {
     RWY.forEach(r => {
       const t = rw === '05' ? r[0] : r[1], far = rw === '05' ? off(r[0], -6.5) : off(r[1], 6.5);
