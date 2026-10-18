@@ -115,6 +115,23 @@ li{margin:4px 0}
 .apphead .live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fa866;margin-right:6px;vertical-align:1px;animation:blink 1.6s infinite}
 @keyframes blink{50%{opacity:.25}}
 .embed .card{box-shadow:0 1px 3px rgba(20,60,64,.08)}
+
+/* ── 地圖縮放提示動畫 ── */
+.maphint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:900;background:rgba(31,42,44,.82);color:#fff;border-radius:16px;padding:16px 20px 14px;text-align:center;pointer-events:none;animation:hintin .35s ease-out;min-width:220px}
+.maphint b{display:block;font-size:16px;margin-top:8px}
+.maphint small{display:block;font-size:12.5px;opacity:.85;margin-top:2px}
+.maphint.out{opacity:0;transition:opacity .35s}
+@keyframes hintin{from{opacity:0;transform:translate(-50%,-44%)}}
+.pinch{position:relative;width:96px;height:46px;margin:0 auto}
+.pinch i{position:absolute;top:13px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.25)}
+.pinch i:first-child{left:30px;animation:pinchL 1.6s ease-in-out infinite}
+.pinch i:last-child{left:46px;animation:pinchR 1.6s ease-in-out infinite}
+@keyframes pinchL{50%{transform:translateX(-28px)}}
+@keyframes pinchR{50%{transform:translateX(28px)}}
+.wheel{width:26px;height:40px;border:3px solid #fff;border-radius:14px;margin:2px auto 0;position:relative}
+.wheel i{position:absolute;left:50%;top:7px;width:4px;height:9px;margin-left:-2px;border-radius:2px;background:#fff;animation:wheel 1.2s ease-in-out infinite}
+@keyframes wheel{50%{transform:translateY(10px);opacity:.3}}
+@media (prefers-reduced-motion: reduce){.pinch i,.wheel i{animation:none}}
 .embed body{background:#e3eff0}
 .embed main{padding:12px 12px 6px;max-width:none}
 .embed h1,.embed .lead,.embed .explain,.embed footer{display:none}
@@ -234,7 +251,26 @@ const AIRLINE = {EVA: '長榮', CAL: '華航', SJX: '星宇', MDA: '華信', UIA
   VJC: '越捷', HVN: '越南航空', THA: '泰航', SIA: '新航', MAS: '馬航', AXM: '亞洲航空', PAL: '菲航', CEB: '宿霧太平洋',
   CCA: '國航', CES: '東航', CSN: '南航', CXA: '廈航', CSZ: '深航', CQH: '春秋', CHH: '海航', UAL: '聯合', DAL: '達美', AAL: '美航',
   FDX: 'FedEx', UPS: 'UPS', GTI: 'Atlas', CKS: 'Kalitta', KLM: '荷航', AFR: '法航', UAE: '阿聯酋', QTR: '卡達', THY: '土航'};
-let MAP, LAYER;
+let MAP, LAYER, HINTED = false;
+function showHint() {
+  const box = document.getElementById('map'); if (!box || !MAP) return;
+  try { if (sessionStorage.getItem('tpeHint')) return; sessionStorage.setItem('tpeHint', '1'); } catch (e) {}
+  const touch = matchMedia('(pointer: coarse)').matches;
+  const el = document.createElement('div');
+  el.className = 'maphint';
+  el.innerHTML = touch
+    ? '<div class="pinch"><i></i><i></i></div><b>兩指捏開放大、捏合縮小</b><small>單指滑動會捲動頁面喔</small>'
+    : '<div class="wheel"><i></i></div><b>滑鼠滾輪可以放大縮小</b><small>也可以拖曳移動地圖</small>';
+  box.appendChild(el);
+  const end = () => { el.classList.add('out'); setTimeout(() => el.remove(), 400); };
+  ['pointerdown', 'wheel', 'touchstart'].forEach(ev => box.addEventListener(ev, end, {once: true, passive: true}));
+  setTimeout(end, 4200);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const z = MAP.getZoom();
+    setTimeout(() => MAP.setZoom(z + 1, {animate: true}), 900);
+    setTimeout(() => MAP.setZoom(z, {animate: true}), 2500);
+  }
+}
 const FLV = '3';   // 10/18 他選定範本 3：答案卡列航班＋地圖大標籤
 function flightBits(e) {
   const code = (e.flight || '').slice(0, 3), al = AIRLINE[code] || '', land = e.phase === 'land';
@@ -257,9 +293,16 @@ function drawMap(rw, ev) {
   const pts = SPOTS.map(x => [x[1], x[2]]);
   if (rw === '05') pts.push(off(RWY[0][0], -4.2), off(RWY[1][0], -4.2));
   if (rw === '23') pts.push(off(RWY[0][1], 3.6), off(RWY[1][1], 3.6));
-  (ev || []).filter(e => e.lat && e.dist_km <= 12).forEach(e => pts.push([e.lat, e.lon]));
   const key = rw + ((ev || []).length ? '+' : '');
-  if (MAP._kfrw !== key) { MAP.fitBounds(L.latLngBounds(pts), {padding: [46, 46]}); MAP._kfrw = key; }
+  if (MAP._kfrw !== key) {
+    // 以兩條跑道中間為中心、往四周等距離放大，跑道永遠在畫面正中間
+    const C = [25.0779, 121.2337];
+    let dLat = 0, dLon = 0;
+    pts.forEach(p => { dLat = Math.max(dLat, Math.abs(p[0] - C[0])); dLon = Math.max(dLon, Math.abs(p[1] - C[1])); });
+    MAP.fitBounds([[C[0] - dLat, C[1] - dLon], [C[0] + dLat, C[1] + dLon]], {padding: [40, 40]});
+    MAP._kfrw = key;
+    if (rw && !HINTED) { HINTED = true; setTimeout(showHint, 500); }
+  }
   if (rw) {
     RWY.forEach(r => {
       const t = rw === '05' ? r[0] : r[1], far = rw === '05' ? off(r[0], -6.5) : off(r[1], 6.5);
