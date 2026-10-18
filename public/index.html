@@ -230,12 +230,12 @@ const DIR8 = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'
 const ARP = [25.0777, 121.2328];
 const RWY = [[[25.0729, 121.2160], [25.0945, 121.2434]], [[25.0608, 121.2235], [25.0833, 121.2520]]];
 const SPOTS = [
-  ['🌳 華興池', 25.0591, 121.1941, '05', 'l'], ['☕ 第三航廈機場咖啡', 25.0570, 121.2174, '05', 'r'],
+  ['🌳 華興池', 25.0591, 121.1941, '05', 'b'], ['☕ 第三航廈機場咖啡', 25.0570, 121.2174, '05', 'r'],
   ['🛩 05 警戒區', 25.0481, 121.2298, '', 'b'], ['🔭 二航廈觀景台', 25.0782, 121.2309, '', 'r'], ['🥐 復興航棧', 25.0948, 121.2495, '23', 'a'],
   ['🍽 大園 101 景觀餐廳', 25.0629, 121.2010, '05', 'a'],
-  ['☕ 151 高地景觀咖啡', 25.1019, 121.2912, '23', 'r'],
+  ['☕ 151 高地景觀咖啡', 25.1019, 121.2912, '23', 'l'],
   ['🐟 竹圍漁港', 25.1172, 121.2445, '23', 'a', '側面看降落'],
-  ['🛝 海湖地景公園', 25.1083, 121.2540, '23', 'r']
+  ['🛝 海湖地景公園', 25.1083, 121.2540, '23', 'l']
 ];
 const U = [0.766, 0.643];   // 跑道往東北的方向（東、北，km）
 function off(p, km) { return [p[0] + U[1] * km / 111.2, p[1] + U[0] * km / (111.2 * Math.cos(25.07 * Math.PI / 180))]; }
@@ -266,9 +266,9 @@ function showHint() {
   ['pointerdown', 'wheel', 'touchstart'].forEach(ev => box.addEventListener(ev, end, {once: true, passive: true}));
   setTimeout(end, 4200);
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const z = MAP.getZoom();
+    const z = MAP.getZoom(), c = MAP.getCenter();
     setTimeout(() => MAP.setZoom(z + 1, {animate: true}), 900);
-    setTimeout(() => MAP.setZoom(z, {animate: true}), 2500);
+    setTimeout(() => MAP.setView(c, z, {animate: true}), 2500);
   }
 }
 const FLV = '3';   // 10/18 他選定範本 3：答案卡列航班＋地圖大標籤
@@ -299,7 +299,8 @@ function drawMap(rw, ev) {
     const C = [25.0779, 121.2337];
     let dLat = 0, dLon = 0;
     pts.forEach(p => { dLat = Math.max(dLat, Math.abs(p[0] - C[0])); dLon = Math.max(dLon, Math.abs(p[1] - C[1])); });
-    MAP.fitBounds([[C[0] - dLat, C[1] - dLon], [C[0] + dLat, C[1] + dLon]], {padding: [40, 40]});
+    const narrow = document.getElementById('map').clientWidth < 520;
+    MAP.fitBounds([[C[0] - dLat, C[1] - dLon], [C[0] + dLat, C[1] + dLon]], {padding: narrow ? [70, 30] : [46, 46], animate: false});
     MAP._kfrw = key;
     if (rw && !HINTED) { HINTED = true; setTimeout(showHint, 500); }
   }
