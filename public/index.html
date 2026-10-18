@@ -233,7 +233,7 @@ function renderFlights(ev) {
 function drawMap(rw, ev) {
   if (!window.L) return;
   if (!MAP) {
-    MAP = L.map('map', {zoomSnap: 0.25, zoomControl: true, scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false, attributionControl: true});
+    MAP = L.map('map', {zoomSnap: 0.25, zoomControl: true, scrollWheelZoom: true, wheelPxPerZoomLevel: 90, dragging: !L.Browser.mobile, tap: false, attributionControl: true});
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       {maxZoom: 16, attribution: 'Tiles © Esri'}).addTo(MAP);
   }
