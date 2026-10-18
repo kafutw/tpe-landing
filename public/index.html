@@ -297,10 +297,14 @@ function drawMap(rw, ev) {
   if (MAP._kfrw !== key) {
     // 以兩條跑道中間為中心、往四周等距離放大，跑道永遠在畫面正中間
     const C = [25.0779, 121.2337];
-    let dLat = 0, dLon = 0;
-    pts.forEach(p => { dLat = Math.max(dLat, Math.abs(p[0] - C[0])); dLon = Math.max(dLon, Math.abs(p[1] - C[1])); });
     const narrow = document.getElementById('map').clientWidth < 520;
-    MAP.fitBounds([[C[0] - dLat, C[1] - dLon], [C[0] + dLat, C[1] + dLon]], {padding: narrow ? [70, 30] : [46, 46], animate: false});
+    // 手機：只用跑道＋今天的降落航道決定大小（遠的點用兩指縮小就看得到）；電腦：所有點都放得下
+    const core = [].concat(...RWY);
+    if (rw === '05') core.push(off(RWY[0][0], -3.2), off(RWY[1][0], -3.2));
+    if (rw === '23') core.push(off(RWY[0][1], 2.6), off(RWY[1][1], 2.6));
+    let dLat = 0, dLon = 0;
+    (narrow ? core : pts).forEach(p => { dLat = Math.max(dLat, Math.abs(p[0] - C[0])); dLon = Math.max(dLon, Math.abs(p[1] - C[1])); });
+    MAP.fitBounds([[C[0] - dLat, C[1] - dLon], [C[0] + dLat, C[1] + dLon]], {padding: narrow ? [16, 16] : [46, 46], animate: false});
     MAP._kfrw = key;
     if (rw && !HINTED) { HINTED = true; setTimeout(showHint, 500); }
   }
