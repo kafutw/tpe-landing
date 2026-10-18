@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>桃園機場現在從哪邊降落？｜卡夫卡愛旅行</title>
-<meta name="description" content="桃園看飛機出發前先查：桃園機場現在從哪一邊降落，該去華興池、第三航廈機場咖啡，還是復興航棧。依即時航機位置判斷，每 10 分鐘左右自動更新。">
+<meta name="description" content="桃園看飛機出發前先查：桃園機場現在從哪一邊降落，該去華興池、第三航廈機場咖啡，還是復興航棧。依即時航機位置判斷，打開就是當下的結果。">
 <meta property="og:title" content="桃園機場現在從哪邊降落？">
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -106,7 +106,7 @@ footer a,.small a{color:var(--brand-d)}
   </section>
 
   <footer>
-    每 10 分鐘左右自動更新一次。航機位置來自 <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a>（ODbL），機場風向來自 <a href="https://aviationweather.gov" target="_blank" rel="noopener">aviationweather.gov</a>。<br>
+    打開頁面或按「重新整理」時即時查詢。航機位置來自 <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a>（ODbL），機場風向來自 <a href="https://aviationweather.gov" target="_blank" rel="noopener">aviationweather.gov</a>。<br>
     結果僅供看飛機參考，不是航空公司或機場的官方資訊。<br>
     <a href="https://kafu.tw/" target="_blank" rel="noopener">卡夫卡愛旅行 kafu.tw</a>
   </footer>
@@ -221,13 +221,27 @@ function render(d) {
   drawMap(d.runway, d.evidence);
 }
 
+const WORKER = 'https://tpe-landing.mrkafkalin.workers.dev/';
 async function load() {
+  const btn = document.getElementById('reload');
+  btn.textContent = '查詢中…'; btn.disabled = true;
   try {
-    const r = await fetch('status.json?t=' + Date.now(), {cache: 'no-store'});
-    render(await r.json());
+    let d;
+    try {
+      const r = await fetch(WORKER + '?t=' + Date.now(), {cache: 'no-store'});
+      if (!r.ok) throw new Error(r.status);
+      d = await r.json();
+      if (!d.updated) throw new Error('bad');
+    } catch (e) {   // Worker 沒回應時，改讀 GitHub 定時更新的那份
+      const r = await fetch('status.json?t=' + Date.now(), {cache: 'no-store'});
+      d = await r.json();
+    }
+    render(d);
   } catch (e) {
     document.getElementById('side').textContent = '讀取失敗';
     document.getElementById('why').textContent = '網路不穩的話，可以先用 Flightradar24 看一眼。';
+  } finally {
+    btn.textContent = '重新整理'; btn.disabled = false;
   }
 }
 document.getElementById('reload').addEventListener('click', load);
