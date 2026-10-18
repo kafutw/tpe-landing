@@ -202,7 +202,7 @@ function flightBits(e) {
 }
 function renderFlights(ev) {
   const st = document.getElementById('fstrip');
-  if (st) st.innerHTML = ev.slice(0, 3).map(e => { const b = flightBits(e); return `<span class="fchip ${b.land ? '' : 'to'}"><b>${b.land ? '⬇' : '⬆'}</b>${b.al ? b.al + ' ' : ''}${e.flight || ''} ${b.land ? '降落中' : '起飛中'}・${e.where} ${e.dist_km} 公里</span>`; }).join('');
+  if (st) st.innerHTML = ev.slice().sort((a, b) => a.dist_km - b.dist_km).slice(0, 3).map(e => { const b = flightBits(e); return `<span class="fchip ${b.land ? '' : 'to'}"><b>${b.land ? '⬇' : '⬆'}</b>${b.al ? b.al + ' ' : ''}${e.flight || ''} ${b.land ? '降落中' : '起飛中'}・${e.where} ${e.dist_km} 公里</span>`; }).join('');
 }
 function drawMap(rw, ev) {
   if (!window.L) return;
