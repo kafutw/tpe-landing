@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>桃園機場現在從哪邊降落？｜卡夫卡愛旅行</title>
+<meta name="description" content="桃園看飛機出發前先查：桃園機場現在從哪一邊降落，該去華興池、第三航廈機場咖啡，還是復興航棧。依即時航機位置判斷，每 10 分鐘左右自動更新。">
+<meta property="og:title" content="桃園機場現在從哪邊降落？">
+<meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
+<style>
+:root{--brand:#347E86;--brand-d:#245a60;--ink:#1f2a2c;--sub:#5b6a6c;--line:#dfe7e8;--bg:#f4f8f8;--card:#fff;--warn:#b5651d;--off:#c9d3d4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.7;font-size:16px}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;line-height:1.4;margin:4px 0 4px}
+.lead{color:var(--sub);margin:0 0 16px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;margin-bottom:14px}
+.answer{border:2px solid var(--brand);text-align:center;padding:22px 16px 18px}
+.answer .k{font-size:14px;color:var(--sub);letter-spacing:1px}
+.answer .side{font-size:40px;font-weight:800;color:var(--brand);line-height:1.25;margin:6px 0 4px}
+.answer .spots{font-size:19px;font-weight:700;margin:0 0 8px}
+.answer .why{font-size:15px;color:var(--sub);margin:0}
+.answer.unknown{border-color:var(--off)}
+.answer.unknown .side{color:var(--sub);font-size:30px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;margin-top:12px;font-size:13.5px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#e6f1f2;color:var(--brand-d);font-weight:600}
+.badge.warn{background:#fbeee2;color:var(--warn)}
+h2{font-size:17px;margin:0 0 10px}
+ul{margin:0;padding-left:20px}
+li{margin:4px 0}
+.small{font-size:13.5px;color:var(--sub)}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btn{flex:1 1 auto;text-align:center;padding:10px 14px;border-radius:12px;border:1px solid var(--brand);color:var(--brand);text-decoration:none;font-weight:700;font-size:15px;background:#fff;cursor:pointer}
+.btn.solid{background:var(--brand);color:#fff}
+svg{width:100%;height:auto;display:block}
+.map text{font-size:13px;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+footer{font-size:12.5px;color:var(--sub);text-align:center;margin-top:18px}
+footer a,.small a{color:var(--brand-d)}
+</style>
+</head>
+<body>
+<main>
+  <h1>桃園機場現在從哪邊降落？</h1>
+  <p class="lead">去桃園看飛機之前先查一次，就知道今天要去西南側還是東北側，比較不會撲空。</p>
+
+  <section class="card answer" id="answer">
+    <div class="k">現在要看降落，建議去</div>
+    <div class="side" id="side">讀取中…</div>
+    <p class="spots" id="spots"></p>
+    <p class="why" id="why"></p>
+    <div class="meta" id="meta"></div>
+  </section>
+
+  <section class="card">
+    <h2>各個看飛機的點在哪一側</h2>
+    <svg class="map" id="map" viewBox="0 0 360 304" role="img" aria-label="桃園機場跑道與看飛機地點位置圖"></svg>
+    <p class="small">箭頭是降落飛機前進的方向。離跑道頭越近，頭頂上的飛機飛得越低。</p>
+  </section>
+
+  <section class="card">
+    <h2>這次是怎麼判斷的</h2>
+    <ul id="evidence"></ul>
+    <p class="small" id="wind"></p>
+    <div class="btns">
+      <a class="btn" href="https://www.flightradar24.com/25.08,121.23/12" target="_blank" rel="noopener">用 Flightradar24 再確認</a>
+      <button class="btn solid" id="reload" type="button">重新整理</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>看懂這個結果</h2>
+    <ul>
+      <li><strong>去西南側</strong>：飛機從大園、觀音那一側進來，往東北降落。華興池、第三航廈機場咖啡都在降落航道下面。</li>
+      <li><strong>去東北側</strong>：飛機從竹圍、海邊那一側進來，往西南降落。這時候去復興航棧，華興池那邊就只看得到起飛。</li>
+      <li><strong>二航廈觀景台</strong>在兩條跑道中間，不管哪一個方向都看得到，只是是從側面看。</li>
+      <li>風向一天之內可能會變，出門前一兩個小時建議再看一次喔。</li>
+    </ul>
+  </section>
+
+  <footer>
+    每 10 分鐘左右自動更新一次。航機位置來自 <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a>（ODbL），機場風向來自 <a href="https://aviationweather.gov" target="_blank" rel="noopener">aviationweather.gov</a>。<br>
+    結果僅供看飛機參考，不是航空公司或機場的官方資訊。<br>
+    <a href="https://kafu.tw/" target="_blank" rel="noopener">卡夫卡愛旅行 kafu.tw</a>
+  </footer>
+</main>
+
+<script>
+const SIDE = {
+  '05': {side: '西南側', spots: '華興池、第三航廈機場咖啡', why: '飛機正從大園、觀音那一側進來，往東北降落。'},
+  '23': {side: '東北側', spots: '復興航棧', why: '飛機正從竹圍、海邊那一側進來，往西南降落。'}
+};
+const BASIS = {
+  live: ['剛剛有飛機在起降', ''],
+  mixed: ['兩個方向都有飛機，可能正在換方向', 'warn'],
+  recent: ['這一輪剛好沒有低空飛機，沿用稍早的判斷', 'warn'],
+  wind: ['沒抓到飛機，用機場風向推估，不一定準', 'warn']
+};
+const DIR8 = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'];
+const ARP = [25.0777, 121.2328];
+const RWY = [[[25.0729, 121.2160], [25.0945, 121.2434]], [[25.0608, 121.2235], [25.0833, 121.2520]]];
+const SPOTS = [
+  ['華興池', 25.0591, 121.1941, '05'], ['第三航廈機場咖啡', 25.0570, 121.2174, '05'],
+  ['05 警戒區', 25.0481, 121.2298, ''], ['二航廈觀景台', 25.0782, 121.2309, ''], ['復興航棧', 25.0948, 121.2495, '23']
+];
+function km(p) { return [(p[1] - ARP[1]) * 111.2 * Math.cos(25.07 * Math.PI / 180), (p[0] - ARP[0]) * 111.2]; }
+function px(p) { return pxk(km(p)); }
+function minsAgo(iso) { return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); }
+function hhmm(iso) { return new Date(iso).toLocaleTimeString('zh-TW', {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Taipei'}); }
+
+function drawMap(rw) {
+  const s = document.getElementById('map');
+  const U = [0.766, 0.643], N = [-0.643, 0.766];   // 跑道方向（往東北）、往西北的法線，單位 km
+  const add = (k, v, t) => [k[0] + v[0] * t, k[1] + v[1] * t];
+  let h = '<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#347E86"/></marker></defs>';
+  RWY.forEach(r => { const a = px(r[0]), b = px(r[1]); h += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#4a5a5c" stroke-width="7" stroke-linecap="round"/>`; });
+  if (rw) {
+    const r0 = km(RWY[0][0]), r1 = km(RWY[0][1]);
+    let st, en;
+    if (rw === '05') { st = add(r0, U, -4.0); en = add(r0, U, -0.35); }
+    else { st = add(r1, U, 1.8); en = add(r1, U, 0.35); }
+    const a = pxk(st), b = pxk(en), lb = pxk(add(st, N, 0.5));
+    h += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#347E86" stroke-width="3.5" stroke-dasharray="7 5" marker-end="url(#ar)"/>`;
+    h += `<text x="${Math.max(8, lb[0] - 20)}" y="${lb[1]}" text-anchor="start" fill="#245a60" font-weight="700">✈ 降落方向</text>`;
+  }
+  SPOTS.forEach(([n, la, lo, side]) => {
+    const p = px([la, lo]); const on = rw && side === rw;
+    const col = on ? '#347E86' : (side ? '#b9c6c8' : '#7a8a8c');
+    h += `<circle cx="${p[0]}" cy="${p[1]}" r="${on ? 8 : 6}" fill="${col}" stroke="#fff" stroke-width="2"/>`;
+    h += `<text x="${p[0] + 11}" y="${p[1] + 5}" text-anchor="start" font-weight="${on ? 700 : 400}">${n}</text>`;
+  });
+  h += '<text x="8" y="298" fill="#5b6a6c">↙ 西南（大園、觀音）</text><text x="352" y="298" text-anchor="end" fill="#5b6a6c">東北（竹圍、海邊）↗</text>';
+  s.innerHTML = h;
+}
+function pxk(k) { return [180 + (k[0] + 1.0) * 38, 145 - (k[1] + 0.15) * 38]; }
+
+function render(d) {
+  const box = document.getElementById('answer');
+  const info = SIDE[d.runway];
+  if (info) {
+    box.classList.remove('unknown');
+    document.getElementById('side').textContent = info.side;
+    document.getElementById('spots').textContent = info.spots;
+    document.getElementById('why').textContent = info.why;
+  } else {
+    box.classList.add('unknown');
+    document.getElementById('side').textContent = '現在判斷不出來';
+    document.getElementById('spots').textContent = '';
+    document.getElementById('why').textContent = '最近剛好沒有飛機在起降、風也很小，建議用 Flightradar24 看一眼降落的飛機從哪一邊進來。';
+  }
+  const m = minsAgo(d.updated);
+  const b = BASIS[d.basis] || ['', ''];
+  let meta = `<span>${hhmm(d.updated)} 更新（${m} 分鐘前）</span>`;
+  if (b[0]) meta += `<span class="badge ${b[1]}">${b[0]}</span>`;
+  if (m > 40) meta += '<span class="badge warn">資料有點舊了，建議再用 Flightradar24 確認</span>';
+  document.getElementById('meta').innerHTML = meta;
+
+  const ev = d.evidence || [];
+  const ul = document.getElementById('evidence');
+  if (ev.length) {
+    ul.innerHTML = ev.map(e => `<li>${e.flight || '一架飛機'}${e.type ? '（' + e.type + '）' : ''}在機場${e.where} ${e.dist_km} 公里，高度約 ${Math.round(e.alt_ft * 0.3048)} 公尺，正往${e.runway === '05' ? '東北' : '西南'}${e.phase === 'land' ? '降落' : '起飛'}（${e.rwy}）</li>`).join('');
+  } else if (d.last_live) {
+    ul.innerHTML = `<li>這一輪跑道附近剛好沒有低空飛機。最近一次看到飛機起降是 ${hhmm(d.last_live.t)}，當時往${d.last_live.runway === '05' ? '東北' : '西南'}起降。</li>`;
+  } else {
+    ul.innerHTML = '<li>這一輪跑道附近剛好沒有低空飛機。</li>';
+  }
+  const w = d.metar && d.metar.wind;
+  document.getElementById('wind').textContent = w ? (w.dir === null ? `機場的風：風很小、方向不定（${w.kt} 節）` :
+    `機場的風：${DIR8[Math.round(w.dir / 45) % 8]}風 ${w.kt} 節（從 ${w.dir} 度吹來）`) : '';
+  drawMap(d.runway);
+}
+
+async function load() {
+  try {
+    const r = await fetch('status.json?t=' + Date.now(), {cache: 'no-store'});
+    render(await r.json());
+  } catch (e) {
+    document.getElementById('side').textContent = '讀取失敗';
+    document.getElementById('why').textContent = '網路不穩的話，可以先用 Flightradar24 看一眼。';
+  }
+}
+document.getElementById('reload').addEventListener('click', load);
+load();
+setInterval(load, 120000);
+</script>
+</body>
+</html>
