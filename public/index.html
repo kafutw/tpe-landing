@@ -146,8 +146,8 @@ footer a,.small a{color:var(--brand-d)}
   <section class="card explain" id="sec-exp">
     <h2>看懂這個結果</h2>
     <ul>
-      <li><strong>去西南側</strong>：飛機從大園、觀音那一側進來，往東北降落。華興池、第三航廈機場咖啡都在降落航道下面。</li>
-      <li><strong>去東北側</strong>：飛機從竹圍、海邊那一側進來，往西南降落。這時候去復興航棧，華興池那邊就只看得到起飛。</li>
+      <li><strong>去西南側</strong>：飛機從大園、觀音那一側進來，往東北降落。華興池、第三航廈機場咖啡、大園 101 景觀餐廳都在降落航道下面。</li>
+      <li><strong>去東北側</strong>：飛機從竹圍、海邊那一側進來，往西南降落。這時候去復興航棧或蘆竹的 151 高地，竹圍漁港可以從側面看，華興池那邊就只看得到起飛。</li>
       <li><strong>二航廈觀景台</strong>在兩條跑道中間，不管哪一個方向都看得到，只是是從側面看。</li>
       <li>風向一天之內可能會變，出門前一兩個小時建議再看一次喔。</li>
     </ul>
@@ -164,8 +164,8 @@ footer a,.small a{color:var(--brand-d)}
 
 <script>
 const SIDE = {
-  '05': {side: '西南側', spots: '華興池、第三航廈機場咖啡', why: '飛機正從大園、觀音那一側進來，往東北降落。'},
-  '23': {side: '東北側', spots: '復興航棧', why: '飛機正從竹圍、海邊那一側進來，往西南降落。'}
+  '05': {side: '西南側', spots: '華興池、第三航廈機場咖啡、大園 101 景觀餐廳', why: '飛機正從大園、觀音那一側進來，往東北降落。'},
+  '23': {side: '東北側', spots: '復興航棧、151 高地景觀咖啡、竹圍漁港', why: '飛機正從竹圍、海邊那一側進來，往西南降落。'}
 };
 const BASIS = {
   live: ['剛剛有飛機在起降', ''],
@@ -178,7 +178,10 @@ const ARP = [25.0777, 121.2328];
 const RWY = [[[25.0729, 121.2160], [25.0945, 121.2434]], [[25.0608, 121.2235], [25.0833, 121.2520]]];
 const SPOTS = [
   ['🌳 華興池', 25.0591, 121.1941, '05', 'a'], ['☕ 第三航廈機場咖啡', 25.0570, 121.2174, '05', 'r'],
-  ['🛩 05 警戒區', 25.0481, 121.2298, '', 'b'], ['🔭 二航廈觀景台', 25.0782, 121.2309, '', 'r'], ['🥐 復興航棧', 25.0948, 121.2495, '23', 'a']
+  ['🛩 05 警戒區', 25.0481, 121.2298, '', 'b'], ['🔭 二航廈觀景台', 25.0782, 121.2309, '', 'r'], ['🥐 復興航棧', 25.0948, 121.2495, '23', 'a'],
+  ['🍽 大園 101 景觀餐廳', 25.0629, 121.2010, '05', 'b'],
+  ['☕ 151 高地景觀咖啡', 25.1019, 121.2912, '23', 'r'],
+  ['🐟 竹圍漁港', 25.1172, 121.2445, '23', 'a', '側面看降落']
 ];
 const U = [0.766, 0.643];   // 跑道往東北的方向（東、北，km）
 function off(p, km) { return [p[0] + U[1] * km / 111.2, p[1] + U[0] * km / (111.2 * Math.cos(25.07 * Math.PI / 180))]; }
@@ -231,9 +234,9 @@ function drawMap(rw, ev) {
     L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone">降落進來 ${rw === '05' ? '↗' : '↙'}</div>`}), interactive: false}).addTo(LAYER);
   }
   RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
-  SPOTS.forEach(([n, la, lo, side, pos]) => {
+  SPOTS.forEach(([n, la, lo, side, pos, onTag]) => {
     const cls = !side ? 'mid' : (rw && side === rw ? 'on' : (rw ? 'off' : 'mid'));
-    const tag = cls === 'on' ? '看降落' : '';
+    const tag = cls === 'on' ? (onTag || '看降落') : '';
     const dot = cls === 'on' ? '#347E86' : (cls === 'off' ? '#c9d3d4' : '#fff');
     L.marker([la, lo], {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<i class="pin" style="background:${dot}${cls === 'mid' ? ';box-shadow:0 0 0 3px #347E86' : ''}"></i><div class="lb ${cls} ${pos}">${n}${tag ? '<small>' + tag + '</small>' : ''}</div>`})}).addTo(LAYER);
   });
