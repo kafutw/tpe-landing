@@ -230,8 +230,8 @@ function drawMap(rw, ev) {
       L.polyline([far, t], {color: '#347E86', weight: 26, opacity: .22, lineCap: 'butt'}).addTo(LAYER);
       L.polyline([far, t], {color: '#347E86', weight: 3, dashArray: '8 7', opacity: .9}).addTo(LAYER);
     });
-    const zb = rw === '05' ? off([25.0668, 121.2198], -5.6) : off([25.0889, 121.2477], 2.6);
-    const zoneAt = [zb[0] + 0.643 * (rw === '05' ? 1.2 : 3.0) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : 3.0) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
+    const zb = rw === '05' ? off([25.0668, 121.2198], -5.6) : off([25.0889, 121.2477], 2.2);
+    const zoneAt = [zb[0] + 0.643 * (rw === '05' ? 1.2 : -1.9) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : -1.9) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
     L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone">降落進來 ${rw === '05' ? '↗' : '↙'}</div>`}), interactive: false}).addTo(LAYER);
   }
   RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
