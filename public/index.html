@@ -177,7 +177,7 @@ const DIR8 = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'
 const ARP = [25.0777, 121.2328];
 const RWY = [[[25.0729, 121.2160], [25.0945, 121.2434]], [[25.0608, 121.2235], [25.0833, 121.2520]]];
 const SPOTS = [
-  ['🌳 華興池', 25.0591, 121.1941, '05', 'a'], ['☕ 第三航廈機場咖啡', 25.0570, 121.2174, '05', 'r'],
+  ['🌳 華興池', 25.0591, 121.1941, '05', 'l'], ['☕ 第三航廈機場咖啡', 25.0570, 121.2174, '05', 'r'],
   ['🛩 05 警戒區', 25.0481, 121.2298, '', 'b'], ['🔭 二航廈觀景台', 25.0782, 121.2309, '', 'r'], ['🥐 復興航棧', 25.0948, 121.2495, '23', 'a'],
   ['🍽 大園 101 景觀餐廳', 25.0629, 121.2010, '05', 'b'],
   ['☕ 151 高地景觀咖啡', 25.1019, 121.2912, '23', 'r'],
@@ -229,8 +229,8 @@ function drawMap(rw, ev) {
       L.polyline([far, t], {color: '#347E86', weight: 26, opacity: .22, lineCap: 'butt'}).addTo(LAYER);
       L.polyline([far, t], {color: '#347E86', weight: 3, dashArray: '8 7', opacity: .9}).addTo(LAYER);
     });
-    const zb = rw === '05' ? off([25.0668, 121.2198], -3.6) : off([25.0889, 121.2477], 2.6);
-    const zoneAt = [zb[0] + 0.643 * 1.8 / 111.2, zb[1] - 0.766 * 1.8 / (111.2 * Math.cos(25.07 * Math.PI / 180))];
+    const zb = rw === '05' ? off([25.0668, 121.2198], -5.6) : off([25.0889, 121.2477], 2.6);
+    const zoneAt = [zb[0] + 0.643 * (rw === '05' ? 1.2 : 1.8) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : 1.8) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
     L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone">降落進來 ${rw === '05' ? '↗' : '↙'}</div>`}), interactive: false}).addTo(LAYER);
   }
   RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
