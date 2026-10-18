@@ -7,6 +7,8 @@
 <meta name="description" content="桃園看飛機出發前先查：桃園機場現在從哪一邊降落，該去華興池、第三航廈機場咖啡，還是復興航棧。依即時航機位置判斷，每 10 分鐘左右自動更新。">
 <meta property="og:title" content="桃園機場現在從哪邊降落？">
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{--brand:#347E86;--brand-d:#245a60;--ink:#1f2a2c;--sub:#5b6a6c;--line:#dfe7e8;--bg:#f4f8f8;--card:#fff;--warn:#b5651d;--off:#c9d3d4}
 *{box-sizing:border-box}
@@ -32,8 +34,28 @@ li{margin:4px 0}
 .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .btn{flex:1 1 auto;text-align:center;padding:10px 14px;border-radius:12px;border:1px solid var(--brand);color:var(--brand);text-decoration:none;font-weight:700;font-size:15px;background:#fff;cursor:pointer}
 .btn.solid{background:var(--brand);color:#fff}
-svg{width:100%;height:auto;display:block}
-.map text{font-size:13px;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+.mapcard{padding:14px 14px 12px}
+#map{height:460px;border-radius:12px;overflow:hidden;background:#eef2f2;z-index:0}
+.lb{position:absolute;display:block;white-space:nowrap;padding:3px 7px 3px;border-radius:9px;font-size:12px;font-weight:700;line-height:1.25;box-shadow:0 1px 4px rgba(0,0,0,.2);text-align:center}
+.lb small{display:block;font-size:10.5px;font-weight:600;opacity:.92}
+.lb.r{left:10px;top:0;transform:translateY(-50%);text-align:left}
+.lb.l{right:10px;top:0;transform:translateY(-50%);text-align:right}
+.lb.a{left:0;bottom:10px;transform:translateX(-50%)}
+.lb.b{left:0;top:10px;transform:translateX(-50%)}
+.pin{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.lb.on{background:var(--brand);color:#fff}
+.lb.off{background:#fff;color:#8a9799}
+.lb.mid{background:#fff;color:var(--ink);border:2px solid var(--brand)}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.zone{display:inline-block;width:max-content;font-size:14px;font-weight:800;color:#fff;background:rgba(52,126,134,.92);padding:5px 11px;border-radius:10px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);transform:translate(-50%,-50%)}
+.zone.dep{background:rgba(110,124,126,.85);font-size:12.5px;font-weight:700}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:10px;font-size:13px;color:var(--sub)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%}
+.leaflet-control-attribution{font-size:10px}
+.leaflet-tooltip.fl{background:#e07a1f;color:#fff;border:0;border-radius:8px;font-weight:700;font-size:11.5px;line-height:1.2;padding:2px 6px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.leaflet-tooltip.fl small{display:block;font-size:10.5px;font-weight:600;opacity:.95}
+.leaflet-tooltip.fl::before{border-right-color:#e07a1f}
 footer{font-size:12.5px;color:var(--sub);text-align:center;margin-top:18px}
 footer a,.small a{color:var(--brand-d)}
 </style>
@@ -51,10 +73,16 @@ footer a,.small a{color:var(--brand-d)}
     <div class="meta" id="meta"></div>
   </section>
 
-  <section class="card">
-    <h2>各個看飛機的點在哪一側</h2>
-    <svg class="map" id="map" viewBox="0 0 360 304" role="img" aria-label="桃園機場跑道與看飛機地點位置圖"></svg>
-    <p class="small">箭頭是降落飛機前進的方向。離跑道頭越近，頭頂上的飛機飛得越低。</p>
+  <section class="card mapcard">
+    <h2>今天的降落航道和看飛機的點</h2>
+    <div id="map" role="img" aria-label="桃園機場跑道、今天的降落航道與看飛機地點地圖"></div>
+    <div class="legend">
+      <span><i class="sw" style="background:#347E86"></i>今天看得到降落</span>
+      <span><i class="sw" style="background:#fff;border:2px solid #c9d3d4"></i>今天只看得到起飛</span>
+      <span><i class="sw" style="background:#fff;border:2px solid #347E86"></i>跑道旁，兩邊都看得到</span>
+      <span><b style="color:#e07a1f">✈</b>剛剛抓到的真實飛機</span>
+    </div>
+    <p class="small">綠色那條帶子就是降落飛機排隊進來的路線，越靠近跑道頭，頭頂上的飛機飛得越低。</p>
   </section>
 
   <section class="card">
@@ -99,39 +127,63 @@ const DIR8 = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'
 const ARP = [25.0777, 121.2328];
 const RWY = [[[25.0729, 121.2160], [25.0945, 121.2434]], [[25.0608, 121.2235], [25.0833, 121.2520]]];
 const SPOTS = [
-  ['華興池', 25.0591, 121.1941, '05'], ['第三航廈機場咖啡', 25.0570, 121.2174, '05'],
-  ['05 警戒區', 25.0481, 121.2298, ''], ['二航廈觀景台', 25.0782, 121.2309, ''], ['復興航棧', 25.0948, 121.2495, '23']
+  ['🌳 華興池', 25.0591, 121.1941, '05', 'a'], ['☕ 第三航廈機場咖啡', 25.0570, 121.2174, '05', 'r'],
+  ['🛩 05 警戒區', 25.0481, 121.2298, '', 'b'], ['🔭 二航廈觀景台', 25.0782, 121.2309, '', 'r'], ['🥐 復興航棧', 25.0948, 121.2495, '23', 'a']
 ];
-function km(p) { return [(p[1] - ARP[1]) * 111.2 * Math.cos(25.07 * Math.PI / 180), (p[0] - ARP[0]) * 111.2]; }
-function px(p) { return pxk(km(p)); }
+const U = [0.766, 0.643];   // 跑道往東北的方向（東、北，km）
+function off(p, km) { return [p[0] + U[1] * km / 111.2, p[1] + U[0] * km / (111.2 * Math.cos(25.07 * Math.PI / 180))]; }
 function minsAgo(iso) { return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); }
 function hhmm(iso) { return new Date(iso).toLocaleTimeString('zh-TW', {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Taipei'}); }
-
-function drawMap(rw) {
-  const s = document.getElementById('map');
-  const U = [0.766, 0.643], N = [-0.643, 0.766];   // 跑道方向（往東北）、往西北的法線，單位 km
-  const add = (k, v, t) => [k[0] + v[0] * t, k[1] + v[1] * t];
-  let h = '<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#347E86"/></marker></defs>';
-  RWY.forEach(r => { const a = px(r[0]), b = px(r[1]); h += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#4a5a5c" stroke-width="7" stroke-linecap="round"/>`; });
-  if (rw) {
-    const r0 = km(RWY[0][0]), r1 = km(RWY[0][1]);
-    let st, en;
-    if (rw === '05') { st = add(r0, U, -4.0); en = add(r0, U, -0.35); }
-    else { st = add(r1, U, 1.8); en = add(r1, U, 0.35); }
-    const a = pxk(st), b = pxk(en), lb = pxk(add(st, N, 0.5));
-    h += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#347E86" stroke-width="3.5" stroke-dasharray="7 5" marker-end="url(#ar)"/>`;
-    h += `<text x="${Math.max(8, lb[0] - 20)}" y="${lb[1]}" text-anchor="start" fill="#245a60" font-weight="700">✈ 降落方向</text>`;
-  }
-  SPOTS.forEach(([n, la, lo, side]) => {
-    const p = px([la, lo]); const on = rw && side === rw;
-    const col = on ? '#347E86' : (side ? '#b9c6c8' : '#7a8a8c');
-    h += `<circle cx="${p[0]}" cy="${p[1]}" r="${on ? 8 : 6}" fill="${col}" stroke="#fff" stroke-width="2"/>`;
-    h += `<text x="${p[0] + 11}" y="${p[1] + 5}" text-anchor="start" font-weight="${on ? 700 : 400}">${n}</text>`;
-  });
-  h += '<text x="8" y="298" fill="#5b6a6c">↙ 西南（大園、觀音）</text><text x="352" y="298" text-anchor="end" fill="#5b6a6c">東北（竹圍、海邊）↗</text>';
-  s.innerHTML = h;
+const PLANE = 'M12 1.5c.8 0 1.4.9 1.4 2.2V9l8.1 4.6v2.1l-8.1-2.4v5.1l2.4 1.8v1.6L12 21l-3.8.8v-1.6l2.4-1.8v-5.1l-8.1 2.4v-2.1L10.6 9V3.7c0-1.3.6-2.2 1.4-2.2z';
+function planeIcon(deg, color, size) {
+  return L.divIcon({className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${deg}deg);filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))"><path d="${PLANE}" fill="${color}" stroke="#fff" stroke-width="1"/></svg>`});
 }
-function pxk(k) { return [180 + (k[0] + 1.0) * 38, 145 - (k[1] + 0.15) * 38]; }
+const AIRLINE = {EVA: '長榮', CAL: '華航', SJX: '星宇', MDA: '華信', UIA: '立榮', TTW: '台灣虎航', CPA: '國泰', HKE: '香港快運', CRK: '香港航空',
+  JJP: '捷星日本', APJ: '樂桃', ANA: '全日空', JAL: '日航', KAL: '大韓', AAR: '韓亞', JNA: '真航空', TWB: '德威', JJA: '濟州',
+  VJC: '越捷', HVN: '越南航空', THA: '泰航', SIA: '新航', MAS: '馬航', AXM: '亞洲航空', PAL: '菲航', CEB: '宿霧太平洋',
+  CCA: '國航', CES: '東航', CSN: '南航', CXA: '廈航', CSZ: '深航', CQH: '春秋', CHH: '海航', UAL: '聯合', DAL: '達美', AAL: '美航',
+  FDX: 'FedEx', UPS: 'UPS', GTI: 'Atlas', CKS: 'Kalitta', KLM: '荷航', AFR: '法航', UAE: '阿聯酋', QTR: '卡達', THY: '土航'};
+let MAP, LAYER;
+function drawMap(rw, ev) {
+  if (!window.L) return;
+  if (!MAP) {
+    MAP = L.map('map', {zoomControl: true, scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false, attributionControl: true});
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom: 16, attribution: 'Tiles © Esri'}).addTo(MAP);
+  }
+  if (LAYER) LAYER.remove();
+  LAYER = L.layerGroup().addTo(MAP);
+  const heading = rw === '23' ? 230 : 50;
+  const pts = SPOTS.map(x => [x[1], x[2]]);
+  if (rw === '05') pts.push(off(RWY[0][0], -4.2), off(RWY[1][0], -4.2));
+  if (rw === '23') pts.push(off(RWY[0][1], 3.6), off(RWY[1][1], 3.6));
+  if (MAP._kfrw !== rw) { MAP.fitBounds(L.latLngBounds(pts).pad(0.08)); MAP._kfrw = rw; }
+  if (rw) {
+    RWY.forEach(r => {
+      const t = rw === '05' ? r[0] : r[1], far = rw === '05' ? off(r[0], -6.5) : off(r[1], 6.5);
+      L.polyline([far, t], {color: '#347E86', weight: 26, opacity: .22, lineCap: 'butt'}).addTo(LAYER);
+      L.polyline([far, t], {color: '#347E86', weight: 3, dashArray: '8 7', opacity: .9}).addTo(LAYER);
+      [4.8, 2.6].forEach((k, i) => L.marker(rw === '05' ? off(r[0], -k) : off(r[1], k), {icon: planeIcon(heading, '#347E86', i ? 30 : 24), interactive: false}).addTo(LAYER));
+    });
+    const zb = rw === '05' ? off([25.0668, 121.2198], -3.6) : off([25.0889, 121.2477], 2.6);
+    const zoneAt = [zb[0] + 0.643 * 1.8 / 111.2, zb[1] - 0.766 * 1.8 / (111.2 * Math.cos(25.07 * Math.PI / 180))];
+    L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone">降落進來 ${rw === '05' ? '↗' : '↙'}</div>`}), interactive: false}).addTo(LAYER);
+  }
+  RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
+  SPOTS.forEach(([n, la, lo, side, pos]) => {
+    const cls = !side ? 'mid' : (rw && side === rw ? 'on' : (rw ? 'off' : 'mid'));
+    const tag = cls === 'on' ? '看降落' : '';
+    const dot = cls === 'on' ? '#347E86' : (cls === 'off' ? '#c9d3d4' : '#fff');
+    L.marker([la, lo], {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<i class="pin" style="background:${dot}${cls === 'mid' ? ';box-shadow:0 0 0 3px #347E86' : ''}"></i><div class="lb ${cls} ${pos}">${n}${tag ? '<small>' + tag + '</small>' : ''}</div>`})}).addTo(LAYER);
+  });
+  (ev || []).filter(e => e.lat).forEach(e => {
+    const code = (e.flight || '').slice(0, 3), al = AIRLINE[code] || '';
+    L.marker([e.lat, e.lon], {icon: planeIcon(e.track, '#e07a1f', 26), zIndexOffset: 1000})
+      .bindTooltip(`${e.flight || '飛機'}${al ? ' ' + al : ''}・${e.phase === 'land' ? '降落' : '起飛'}`,
+        {permanent: true, direction: 'right', offset: [12, 0], className: 'fl'}).addTo(LAYER);
+  });
+}
 
 function render(d) {
   const box = document.getElementById('answer');
@@ -166,7 +218,7 @@ function render(d) {
   const w = d.metar && d.metar.wind;
   document.getElementById('wind').textContent = w ? (w.dir === null ? `機場的風：風很小、方向不定（${w.kt} 節）` :
     `機場的風：${DIR8[Math.round(w.dir / 45) % 8]}風 ${w.kt} 節（從 ${w.dir} 度吹來）`) : '';
-  drawMap(d.runway);
+  drawMap(d.runway, d.evidence);
 }
 
 async function load() {

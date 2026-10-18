@@ -89,7 +89,8 @@ def classify(ac):
         where, dist = side_of_airport(lat, lon)
         out.append({'flight': (a.get('flight') or a.get('r') or '').strip(), 'type': a.get('t') or '',
                     'runway': '05' if ne else '23', 'phase': phase, 'rwy': RWY_NAME[key],
-                    'alt_ft': int(alt), 'where': where, 'dist_km': round(dist, 1)})
+                    'alt_ft': int(alt), 'where': where, 'dist_km': round(dist, 1),
+                    'lat': round(lat, 4), 'lon': round(lon, 4), 'track': round(trk)})
     return out
 
 
