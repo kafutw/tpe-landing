@@ -337,7 +337,7 @@ function postH() { if (window.parent !== window) window.parent.postMessage({tpeL
 if (document.documentElement.classList.contains('embed')) { new ResizeObserver(postH).observe(document.querySelector('main')); window.addEventListener('load', postH); }
 document.querySelectorAll('.js-reload').forEach(b => b.addEventListener('click', () => load(true)));
 load(false);
-setInterval(() => { if (!POLL) load(false); }, 120000);
+setInterval(() => { if (!POLL) load(false); }, 60000);
 </script>
 </body>
 </html>
