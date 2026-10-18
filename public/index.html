@@ -68,7 +68,7 @@ li{margin:4px 0}
   .lay-a h1{font-size:28px}
   /* A 寬版單欄：答案橫幅、地圖加大、說明兩欄 */
   .lay-a main{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
-  .lay-a main>h1,.lay-a main>.lead,.lay-a #answer,.lay-a #mapcard,.lay-a footer,.lay-a .embedfoot{grid-column:1/-1}
+  .lay-a main>h1,.lay-a main>.lead,.lay-a #answer,.lay-a #mapcard,.lay-a #flights,.lay-a footer,.lay-a .embedfoot{grid-column:1/-1}
   .lay-a #answer{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto auto auto;column-gap:36px;text-align:left;padding:22px 32px}
   .lay-a #answer .k{grid-column:1;grid-row:1}
   .lay-a #answer .side{grid-column:1;grid-row:2 / span 3;font-size:56px;align-self:center;margin:0}
@@ -81,21 +81,23 @@ li{margin:4px 0}
 }
 
 /* ── 航班資訊範本（?fl=1/2/3） ── */
-.leaflet-tooltip.fl.to{background:#5b6f8c}.leaflet-tooltip.fl.to::before{border-right-color:#5b6f8c}
+.leaflet-tooltip.fl.to{background:#5b6f8c !important}.leaflet-tooltip.fl.to::before{border-right-color:#5b6f8c !important;border-bottom-color:#5b6f8c !important}
+.leaflet-tooltip.fl::before{border-bottom-color:#e07a1f}
 .fl1 .leaflet-tooltip.fl,.fl3 .leaflet-tooltip.fl{font-size:15px;padding:5px 10px;border-radius:10px;line-height:1.25}
 .fl1 .leaflet-tooltip.fl small,.fl3 .leaflet-tooltip.fl small{font-size:12.5px;font-weight:600}
 .fl1 .leaflet-tooltip.fl b,.fl3 .leaflet-tooltip.fl b{font-size:16px}
 .flights{display:none}
 .fl2 .flights{display:block}
+.fl2 #evidence{display:none}
 .fgrid{display:grid;grid-template-columns:1fr;gap:10px}
 @media (min-width:900px){.fgrid{grid-template-columns:1fr 1fr 1fr}}
-.fcard{border:2px solid #f0c9a3;background:#fff8f1;border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center}
+.fcard{border:2px solid #f0c9a3;background:#fff8f1;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .fcard.to{border-color:#c9d3e3;background:#f5f7fb}
-.fcard .ph{grid-row:1 / span 2;font-size:15px;font-weight:800;color:#fff;background:#e07a1f;border-radius:10px;padding:8px 10px;text-align:center;line-height:1.2}
+.fcard .ph{align-self:flex-start;font-size:17px;font-weight:800;color:#fff;background:#e07a1f;border-radius:999px;padding:4px 14px;line-height:1.4}
 .fcard.to .ph{background:#5b6f8c}
-.fcard .ph i{display:block;font-style:normal;font-size:22px}
-.fcard .nm{font-size:19px;font-weight:800;color:var(--ink)}
-.fcard .dt{font-size:14.5px;color:var(--sub)}
+.fcard .ph i{font-style:normal;margin-right:4px}
+.fcard .nm{font-size:22px;font-weight:800;color:var(--ink)}
+.fcard .dt{font-size:15px;color:var(--sub)}
 .fstrip{display:none}
 .fl3 .fstrip{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
 .fchip{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:700;padding:7px 14px;border-radius:999px;background:#fff1e4;color:#9a4d0c;border:1px solid #f0c9a3}
@@ -242,7 +244,9 @@ function drawMap(rw, ev) {
   const pts = SPOTS.map(x => [x[1], x[2]]);
   if (rw === '05') pts.push(off(RWY[0][0], -4.2), off(RWY[1][0], -4.2));
   if (rw === '23') pts.push(off(RWY[0][1], 3.6), off(RWY[1][1], 3.6));
-  if (MAP._kfrw !== rw) { MAP.fitBounds(L.latLngBounds(pts).pad(0.08)); MAP._kfrw = rw; }
+  (ev || []).filter(e => e.lat && e.dist_km <= 12).forEach(e => pts.push([e.lat, e.lon]));
+  const key = rw + ((ev || []).length ? '+' : '');
+  if (MAP._kfrw !== key) { MAP.fitBounds(L.latLngBounds(pts).pad(0.08)); MAP._kfrw = key; }
   if (rw) {
     RWY.forEach(r => {
       const t = rw === '05' ? r[0] : r[1], far = rw === '05' ? off(r[0], -6.5) : off(r[1], 6.5);
@@ -268,7 +272,7 @@ function drawMap(rw, ev) {
       : big ? `<b>${land ? '⬇ 降落中' : '⬆ 起飛中'}</b><small>${al ? al + ' ' : ''}${e.flight || ''}・${Math.round(e.alt_ft * 0.3048)} 公尺</small>`
       : `${e.flight || '飛機'}${al ? ' ' + al : ''}・${land ? '降落' : '起飛'}`;
     L.marker([e.lat, e.lon], {icon: planeIcon(e.track, land ? '#e07a1f' : '#5b6f8c', big ? 34 : 26), zIndexOffset: 1000})
-      .bindTooltip(txt, {permanent: true, direction: 'right', offset: [big ? 16 : 12, 0], className: 'fl' + (land ? '' : ' to')}).addTo(LAYER);
+      .bindTooltip(txt, {permanent: true, direction: big ? 'bottom' : 'right', offset: big ? [0, 14] : [12, 0], className: 'fl' + (land ? '' : ' to')}).addTo(LAYER);
   });
 }
 
