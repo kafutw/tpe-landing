@@ -78,7 +78,6 @@ li{margin:4px 0}
   .lay-a #answer .ansreload{grid-column:3;grid-row:1 / span 4;align-self:center;margin:0;padding:12px 26px;font-size:16px}
   .lay-a #map{height:600px}
 }
-}
 
 /* ── 航班資訊範本（?fl=1/2/3） ── */
 .leaflet-tooltip.fl.to{background:#5b6f8c !important}.leaflet-tooltip.fl.to::before{border-right-color:#5b6f8c !important;border-bottom-color:#5b6f8c !important}
@@ -234,7 +233,7 @@ function renderFlights(ev) {
 function drawMap(rw, ev) {
   if (!window.L) return;
   if (!MAP) {
-    MAP = L.map('map', {zoomControl: true, scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false, attributionControl: true});
+    MAP = L.map('map', {zoomSnap: 0.25, zoomControl: true, scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false, attributionControl: true});
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       {maxZoom: 16, attribution: 'Tiles © Esri'}).addTo(MAP);
   }
