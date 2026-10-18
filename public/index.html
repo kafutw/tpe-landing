@@ -8,6 +8,11 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="看降落">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#347E86">
 <meta property="og:title" content="桃園機場現在從哪邊降落？">
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
@@ -68,7 +73,7 @@ li{margin:4px 0}
   .lay-a h1{font-size:28px}
   /* A 寬版單欄：答案橫幅、地圖加大、說明兩欄 */
   .lay-a main{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
-  .lay-a main>h1,.lay-a main>.lead,.lay-a #answer,.lay-a #mapcard,.lay-a footer,.lay-a .embedfoot{grid-column:1/-1}
+  .lay-a main>h1,.lay-a main>.lead,.lay-a #answer,.lay-a #mapcard,.lay-a #install,.lay-a footer,.lay-a .embedfoot{grid-column:1/-1}
   .lay-a #answer{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto auto auto;column-gap:36px;text-align:left;padding:22px 32px}
   .lay-a #answer .k{grid-column:1;grid-row:1}
   .lay-a #answer .side{grid-column:1;grid-row:2 / span 3;font-size:56px;align-self:center;margin:0}
@@ -91,6 +96,15 @@ li{margin:4px 0}
 .fchip.to{background:#eef2f8;color:#3d4f6b;border-color:#c9d3e3}
 .fchip b{font-size:18px}
 @media (min-width:900px){.lay-a.fl3 #answer .fstrip{grid-column:1 / -1;grid-row:5;justify-content:flex-start}}
+
+/* ── 裝到手機桌面 ── */
+.install h2{display:flex;align-items:center;gap:8px}
+.install .steps{margin:6px 0 0;padding-left:22px}
+.install .steps li{margin:6px 0}
+.install .os{font-weight:800;color:var(--brand-d);margin:10px 0 2px}
+.install .btn{display:none;max-width:280px}
+.can-install .install .btn{display:block}
+.embed .install,.standalone .install{display:none}
 .embed body{background:#fff}
 .embed main{padding:0;max-width:none}
 .embed h1,.embed .lead,.embed .explain,.embed footer{display:none}
@@ -131,6 +145,17 @@ footer a,.small a{color:var(--brand-d)}
       <span><b style="color:#e07a1f">✈</b>剛剛抓到的真實飛機</span>
     </div>
     <p class="small">綠色那條帶子就是降落飛機排隊進來的路線，越靠近跑道頭，頭頂上的飛機飛得越低。</p>
+  </section>
+
+  <section class="card install" id="install">
+    <h2>📲 把它裝到手機桌面</h2>
+    <p class="small">裝好之後，手機桌面會多一個「看降落」小圖示，出門前點一下就知道今天去哪一側。</p>
+    <button class="btn solid" id="installBtn" type="button">加到手機桌面</button>
+    <p class="os">iPhone（用 Safari 打開這頁）</p>
+    <ol class="steps"><li>點畫面下方中間的「分享」按鈕（方框加一個往上的箭頭）。</li><li>往下滑，點「加入主畫面」。</li><li>右上角點「加入」，桌面就會出現「看降落」。</li></ol>
+    <p class="os">Android（用 Chrome 打開這頁）</p>
+    <ol class="steps"><li>點右上角的三個點。</li><li>點「加到主畫面」或「安裝應用程式」。</li><li>按「安裝」，桌面就會出現「看降落」。</li></ol>
+    <p class="small">如果是在 LINE、Facebook 裡面點開的，要先點右上角選「用瀏覽器開啟」，才看得到加到主畫面的選項喔。</p>
   </section>
 
   <section class="card explain" id="sec-ev">
@@ -340,6 +365,14 @@ drawMap(null, []);   // 地圖先畫出來，不等資料
 function postH() { if (window.parent !== window) window.parent.postMessage({tpeLandingH: document.querySelector('main').scrollHeight + 8}, '*'); }
 if (document.documentElement.classList.contains('embed')) { new ResizeObserver(postH).observe(document.querySelector('main')); window.addEventListener('load', postH); }
 document.querySelectorAll('.js-reload').forEach(b => b.addEventListener('click', () => load(true)));
+
+// 可以安裝成手機小工具（PWA）
+if ('serviceWorker' in navigator && !document.documentElement.classList.contains('embed')) navigator.serviceWorker.register('sw.js').catch(() => {});
+if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) document.documentElement.classList.add('standalone');
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; document.documentElement.classList.add('can-install'); });
+const IB = document.getElementById('installBtn');
+if (IB) IB.addEventListener('click', async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; document.documentElement.classList.remove('can-install'); });
 load(false);
 setInterval(() => { if (!POLL) load(false); }, 60000);
 </script>

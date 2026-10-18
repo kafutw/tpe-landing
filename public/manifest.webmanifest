@@ -1,0 +1,16 @@
+{
+  "name": "桃園機場現在從哪邊降落？",
+  "short_name": "看降落",
+  "description": "去桃園看飛機前先查：今天該去西南側還是東北側。依即時航機位置判斷。",
+  "lang": "zh-Hant-TW",
+  "start_url": "./?source=app",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f8f8",
+  "theme_color": "#347E86",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
