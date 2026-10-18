@@ -13,7 +13,7 @@
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');var m=q.match(/[?&]layout=([abc])/);if(m&&!/embed=1/.test(q))h.classList.add('lay-'+m[1]);})();</script>
+<script>(function(){var h=document.documentElement;if(/[?&]embed=1/.test(location.search))h.classList.add('embed');else h.classList.add('lay-a');})();</script>
 <style>
 :root{--brand:#347E86;--brand-d:#245a60;--ink:#1f2a2c;--sub:#5b6a6c;--line:#dfe7e8;--bg:#f4f8f8;--card:#fff;--warn:#b5651d;--off:#c9d3d4}
 *{box-sizing:border-box}
@@ -59,10 +59,10 @@ li{margin:4px 0}
 .sw{display:inline-block;width:14px;height:14px;border-radius:50%}
 .leaflet-control-attribution{font-size:10px}
 
-/* ── 桌面版範本（手機一律單欄） ── */
+/* ── 桌面版：A 寬版單欄（10/18 他選定）；手機一律單欄 ── */
 @media (min-width:900px){
-  .lay-a main,.lay-b main,.lay-c main{max-width:1180px;padding:28px 24px 48px}
-  .lay-a h1,.lay-b h1,.lay-c h1{font-size:28px}
+  .lay-a main{max-width:1180px;padding:28px 24px 48px}
+  .lay-a h1{font-size:28px}
   /* A 寬版單欄：答案橫幅、地圖加大、說明兩欄 */
   .lay-a main{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
   .lay-a main>h1,.lay-a main>.lead,.lay-a #answer,.lay-a #mapcard,.lay-a footer,.lay-a .embedfoot{grid-column:1/-1}
@@ -73,20 +73,7 @@ li{margin:4px 0}
   .lay-a #answer .why{grid-column:2;grid-row:3}
   .lay-a #answer .meta{grid-column:2;grid-row:4;justify-content:flex-start;margin-top:8px}
   .lay-a #map{height:600px}
-  /* B 左右兩欄：左邊答案＋判斷，右邊大地圖 */
-  .lay-b main{display:grid;grid-template-columns:380px 1fr;grid-template-areas:"h1 h1" "lead lead" "ans map" "ev map" "exp map" "ft ft";gap:0 18px;align-items:start}
-  .lay-b main>h1{grid-area:h1}.lay-b main>.lead{grid-area:lead}.lay-b #answer{grid-area:ans}
-  .lay-b #mapcard{grid-area:map;position:sticky;top:16px}.lay-b #sec-ev{grid-area:ev}.lay-b #sec-exp{grid-area:exp}.lay-b footer{grid-area:ft}
-  .lay-b #map{height:calc(100vh - 170px);min-height:560px}
-  /* C 全幅地圖：答案卡浮在地圖左上，說明在下面兩欄 */
-  .lay-c main{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"h1 h1" "lead lead" "map map" "ev exp" "ft ft";gap:0 16px}
-  .lay-c main>h1{grid-area:h1}.lay-c main>.lead{grid-area:lead}.lay-c #mapcard{grid-area:map;padding:0;overflow:hidden}
-  .lay-c #mapcard h2{position:absolute;left:-9999px}
-  .lay-c #mapcard .legend,.lay-c #mapcard .small{padding:0 16px}
-  .lay-c #mapcard .small{padding-bottom:12px}
-  .lay-c #answer{grid-area:map;align-self:start;justify-self:start;z-index:500;width:330px;margin:22px 0 0 64px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
-  .lay-c #map{height:680px;border-radius:16px 16px 0 0}
-  .lay-c #sec-ev{grid-area:ev}.lay-c #sec-exp{grid-area:exp}.lay-c footer{grid-area:ft}
+}
 }
 .embed body{background:#fff}
 .embed main{padding:0;max-width:none}
@@ -203,7 +190,7 @@ function drawMap(rw, ev) {
   const pts = SPOTS.map(x => [x[1], x[2]]);
   if (rw === '05') pts.push(off(RWY[0][0], -4.2), off(RWY[1][0], -4.2));
   if (rw === '23') pts.push(off(RWY[0][1], 3.6), off(RWY[1][1], 3.6));
-  if (MAP._kfrw !== rw) { MAP.fitBounds(L.latLngBounds(pts).pad(0.08), (document.documentElement.classList.contains('lay-c') && innerWidth >= 900) ? {paddingTopLeft: [400, 0]} : {}); MAP._kfrw = rw; }
+  if (MAP._kfrw !== rw) { MAP.fitBounds(L.latLngBounds(pts).pad(0.08)); MAP._kfrw = rw; }
   if (rw) {
     RWY.forEach(r => {
       const t = rw === '05' ? r[0] : r[1], far = rw === '05' ? off(r[0], -6.5) : off(r[1], 6.5);
