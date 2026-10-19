@@ -33,6 +33,7 @@ h1{font-size:22px;line-height:1.4;margin:4px 0 4px}
 .answer .spots{font-size:19px;font-weight:700;margin:0 0 8px}
 .answer .why{font-size:15px;color:var(--sub);margin:0}
 .answer.unknown{border-color:var(--off)}
+.answer.stale .side,.answer.stale .spots,.answer.stale .why{opacity:.45}
 .answer.unknown .side{color:var(--sub);font-size:30px}
 .meta{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;margin-top:12px;font-size:13.5px}
 .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#e6f1f2;color:var(--brand-d);font-weight:600}
@@ -336,6 +337,7 @@ function drawMap(rw, ev) {
   });
 }
 
+function agoText(m) { return m < 60 ? m + ' 分鐘前' : m < 1440 ? Math.floor(m / 60) + ' 小時前' : Math.floor(m / 1440) + ' 天前'; }
 function render(d) {
   const box = document.getElementById('answer');
   const info = SIDE[d.runway];
@@ -351,15 +353,20 @@ function render(d) {
     document.getElementById('why').textContent = '最近剛好沒有飛機在起降、風也很小，建議用 Flightradar24 看一眼降落的飛機從哪一邊進來。';
   }
   const m = minsAgo(d.updated);
+  // 超過 30 分鐘沒人查，資料就不算「現在」：答案變淡、不畫舊飛機、不說「剛剛」
+  const stale = m > 30;
+  box.classList.toggle('stale', stale);
   const b = BASIS[d.basis] || ['', ''];
-  let meta = `<span>${hhmm(d.updated)} 更新（${m} 分鐘前）</span>`;
-  if (b[0]) meta += `<span class="badge ${b[1]}">${b[0]}</span>`;
-  if (m > 40) meta += '<span class="badge warn">資料有點舊了，建議再用 Flightradar24 確認</span>';
+  let meta = stale ? `<span>上次更新是 ${agoText(m)}（${hhmm(d.updated)}）</span>` : `<span>${hhmm(d.updated)} 更新（${m} 分鐘前）</span>`;
+  if (b[0] && !stale) meta += `<span class="badge ${b[1]}">${b[0]}</span>`;
+  if (stale && !d.refreshing) meta += '<span class="badge warn">資料比較舊，按一下「重新整理」就會去抓現在的飛機</span>';
   document.getElementById('meta').innerHTML = meta;
 
-  const ev = d.evidence || [];
+  const ev = stale ? [] : (d.evidence || []);
   const ul = document.getElementById('evidence');
-  if (ev.length) {
+  if (stale) {
+    ul.innerHTML = `<li>這份是 ${agoText(m)}的資料，現在的飛機位置還沒抓到，上面的方向先當參考就好。</li>`;
+  } else if (ev.length) {
     ul.innerHTML = ev.map(e => `<li>${e.flight || '一架飛機'}${e.type ? '（' + e.type + '）' : ''}在機場${e.where} ${e.dist_km} 公里，高度約 ${Math.round(e.alt_ft * 0.3048)} 公尺，正往${e.runway === '05' ? '東北' : '西南'}${e.phase === 'land' ? '降落' : '起飛'}（${e.rwy}）</li>`).join('');
   } else if (d.last_live) {
     ul.innerHTML = `<li>這一輪跑道附近剛好沒有低空飛機。最近一次看到飛機起降是 ${hhmm(d.last_live.t)}，當時往${d.last_live.runway === '05' ? '東北' : '西南'}起降。</li>`;
@@ -369,8 +376,8 @@ function render(d) {
   const w = d.metar && d.metar.wind;
   document.getElementById('wind').textContent = w ? (w.dir === null ? `機場的風：風很小、方向不定（${w.kt} 節）` :
     `機場的風：${DIR8[Math.round(w.dir / 45) % 8]}風 ${w.kt} 節（從 ${w.dir} 度吹來）`) : '';
-  renderFlights(d.evidence || []);
-  drawMap(d.runway, d.evidence);
+  renderFlights(ev);
+  drawMap(d.runway, ev);
 }
 
 const WORKER = 'https://tpe-landing.mrkafkalin.workers.dev/';
@@ -387,7 +394,7 @@ async function fromWorker() {
   return d;
 }
 function showRefreshing() {
-  document.getElementById('meta').insertAdjacentHTML('beforeend', '<span class="badge warn">正在抓最新的飛機位置，約 1 分鐘後自動更新…</span>');
+  document.getElementById('meta').insertAdjacentHTML('beforeend', '<span class="badge warn">正在抓現在的飛機位置，約 1 分鐘後自動更新…</span>');
 }
 function startPoll(before) {
   if (POLL) return;
