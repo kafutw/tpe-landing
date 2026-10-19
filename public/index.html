@@ -207,10 +207,10 @@ footer a,.small a{color:var(--brand-d)}
     </ul>
   </section>
 
-  <p class="embedfoot">依桃園機場附近的即時航機位置判斷・<a href="https://kafutw.github.io/tpe-landing/" target="_blank" rel="noopener">打開完整頁面</a></p>
+  <p class="embedfoot">依現在的風向和機場附近的飛機判斷・<a href="https://kafutw.github.io/tpe-landing/" target="_blank" rel="noopener">打開完整頁面</a></p>
 
   <footer>
-    打開頁面或按「重新整理」時即時查詢。航機位置來自 <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a>（ODbL），機場風向來自 <a href="https://aviationweather.gov" target="_blank" rel="noopener">aviationweather.gov</a>。<br>
+    打開頁面或按「重新整理」時即時查詢。航機位置來自 <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a>（ODbL），風向來自 <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> 與 <a href="https://aviationweather.gov" target="_blank" rel="noopener">aviationweather.gov</a>。<br>
     結果僅供看飛機參考，不是航空公司或機場的官方資訊。<br>
     <a href="https://kafu.tw/" target="_blank" rel="noopener">卡夫卡愛旅行 kafu.tw</a>
   </footer>
@@ -337,10 +337,44 @@ function drawMap(rw, ev) {
   });
 }
 
-function agoText(m) { return m < 60 ? m + ' 分鐘前' : m < 1440 ? Math.floor(m / 60) + ' 小時前' : Math.floor(m / 1440) + ' 天前'; }
+// 判斷依據只講「看什麼判斷的」，不講多久以前更新（他 10/19 裁決：講時間反而誤會）
+const BASIS2 = {
+  live: '依剛剛在跑道附近起降的飛機判斷',
+  mixed: '兩個方向都有飛機，可能正在換方向',
+  wind: '依現在機場的風向判斷',
+  prior: '依現在的風向和稍早的起降方向判斷'
+};
+const FRESH_MIN = 10;   // 航機資料 10 分鐘內才算「現在」
+let WIND = null;        // 打開頁面當下的風（Open-Meteo，瀏覽器直接抓，約 1 秒）
+async function windNow() {
+  const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0777&longitude=121.2328&current=wind_direction_10m,wind_speed_10m&wind_speed_unit=kn', {cache: 'no-store'});
+  const j = await r.json();
+  return {dir: j.current.wind_direction_10m, kt: j.current.wind_speed_10m};
+}
+function lastLiveRunway(d) {
+  if (d.last_live && d.last_live.runway) return d.last_live.runway;
+  const h = (d.history || []).slice().reverse().find(x => x.basis === 'live' && x.runway);
+  return h ? h.runway : (d.runway || null);
+}
+// 航機資料是新的就照飛機；不是新的，就用「現在的風」決定：
+// 順著跑道方向的風超過 5 節，飛機一定迎風降落；風小的時候機場通常不換方向，沿用稍早的起降方向
+function decide(d) {
+  const fresh = d && minsAgo(d.updated) <= FRESH_MIN && (d.basis === 'live' || d.basis === 'mixed');
+  if (fresh) return {rw: d.runway, basis: d.basis, fresh: true};
+  const prior = d ? lastLiveRunway(d) : null;
+  if (WIND) {
+    const comp = WIND.kt * Math.cos((WIND.dir - 50) * Math.PI / 180);   // 正＝東北風（05 迎風）
+    if (Math.abs(comp) >= 5) return {rw: comp > 0 ? '05' : '23', basis: 'wind', fresh: false};
+    if (prior) return {rw: prior, basis: 'prior', fresh: false};
+    if (WIND.kt >= 3) return {rw: comp >= 0 ? '05' : '23', basis: 'wind', fresh: false};
+  }
+  return {rw: prior, basis: prior ? 'prior' : null, fresh: false};
+}
 function render(d) {
   const box = document.getElementById('answer');
-  const info = SIDE[d.runway];
+  const k = decide(d);
+  const info = SIDE[k.rw];
+  box.classList.remove('stale');
   if (info) {
     box.classList.remove('unknown');
     document.getElementById('side').textContent = info.side;
@@ -350,38 +384,29 @@ function render(d) {
     box.classList.add('unknown');
     document.getElementById('side').textContent = '現在判斷不出來';
     document.getElementById('spots').textContent = '';
-    document.getElementById('why').textContent = '最近剛好沒有飛機在起降、風也很小，建議用 Flightradar24 看一眼降落的飛機從哪一邊進來。';
+    document.getElementById('why').textContent = '風很小、跑道附近也剛好沒有飛機，建議用 Flightradar24 看一眼降落的飛機從哪一邊進來。';
   }
-  const m = minsAgo(d.updated);
-  // 超過 30 分鐘沒人查，資料就不算「現在」：答案變淡、不畫舊飛機、不說「剛剛」
-  const stale = m > 30;
-  box.classList.toggle('stale', stale);
-  const b = BASIS[d.basis] || ['', ''];
-  let meta = stale ? `<span>上次更新是 ${agoText(m)}（${hhmm(d.updated)}）</span>` : `<span>${hhmm(d.updated)} 更新（${m} 分鐘前）</span>`;
-  if (b[0] && !stale) meta += `<span class="badge ${b[1]}">${b[0]}</span>`;
-  if (stale && !d.refreshing) meta += '<span class="badge warn">資料比較舊，按一下「重新整理」就會去抓現在的飛機</span>';
-  document.getElementById('meta').innerHTML = meta;
+  const lb = BASIS2[k.basis];
+  document.getElementById('meta').innerHTML = lb ? `<span class="badge ${k.basis === 'mixed' ? 'warn' : ''}">${lb}</span>` : '';
 
-  const ev = stale ? [] : (d.evidence || []);
+  const ev = k.fresh ? (d.evidence || []) : [];
   const ul = document.getElementById('evidence');
-  if (stale) {
-    ul.innerHTML = `<li>這份是 ${agoText(m)}的資料，現在的飛機位置還沒抓到，上面的方向先當參考就好。</li>`;
-  } else if (ev.length) {
+  if (k.fresh && ev.length) {
     ul.innerHTML = ev.map(e => `<li>${e.flight || '一架飛機'}${e.type ? '（' + e.type + '）' : ''}在機場${e.where} ${e.dist_km} 公里，高度約 ${Math.round(e.alt_ft * 0.3048)} 公尺，正往${e.runway === '05' ? '東北' : '西南'}${e.phase === 'land' ? '降落' : '起飛'}（${e.rwy}）</li>`).join('');
-  } else if (d.last_live) {
-    ul.innerHTML = `<li>這一輪跑道附近剛好沒有低空飛機。最近一次看到飛機起降是 ${hhmm(d.last_live.t)}，當時往${d.last_live.runway === '05' ? '東北' : '西南'}起降。</li>`;
+  } else if (k.fresh) {
+    ul.innerHTML = '<li>跑道附近這一兩分鐘剛好沒有低空飛機。</li>';
   } else {
-    ul.innerHTML = '<li>這一輪跑道附近剛好沒有低空飛機。</li>';
+    ul.innerHTML = '<li>正在找跑道附近的飛機，找到就會直接畫在地圖上。</li>';
   }
-  const w = d.metar && d.metar.wind;
-  document.getElementById('wind').textContent = w ? (w.dir === null ? `機場的風：風很小、方向不定（${w.kt} 節）` :
-    `機場的風：${DIR8[Math.round(w.dir / 45) % 8]}風 ${w.kt} 節（從 ${w.dir} 度吹來）`) : '';
+  const w = WIND || (d && d.metar && d.metar.wind && {dir: d.metar.wind.dir, kt: d.metar.wind.kt});
+  document.getElementById('wind').textContent = w ? (w.dir === null ? `機場附近的風：風很小、方向不定（${Math.round(w.kt)} 節）` :
+    `機場附近的風：${DIR8[Math.round(w.dir / 45) % 8]}風 ${Math.round(w.kt)} 節（從 ${Math.round(w.dir)} 度吹來）`) : '';
   renderFlights(ev);
-  drawMap(d.runway, ev);
+  drawMap(k.rw, ev);
 }
 
 const WORKER = 'https://tpe-landing.mrkafkalin.workers.dev/';
-let POLL = null;
+let POLL = null, LAST = null;
 async function fromGitHub() {
   const r = await fetch('status.json?t=' + Date.now(), {cache: 'no-store'});
   return await r.json();
@@ -393,38 +418,40 @@ async function fromWorker() {
   if (!d.updated) throw new Error('bad');
   return d;
 }
-function showRefreshing() {
-  document.getElementById('meta').insertAdjacentHTML('beforeend', '<span class="badge warn">正在抓現在的飛機位置，約 1 分鐘後自動更新…</span>');
-}
+function show(d) { if (!LAST || d.updated >= LAST.updated) LAST = d; render(LAST); }
 function startPoll(before) {
   if (POLL) return;
   let n = 0;
   POLL = setInterval(async () => {
     n++;
     let x; try { x = await fromWorker(); } catch (e) { try { x = await fromGitHub(); } catch (e2) { return; } }
-    if (x.updated !== before || n >= 9) { clearInterval(POLL); POLL = null; render(x); }
-  }, 20000);
+    if (x.updated !== before || n >= 18) { clearInterval(POLL); POLL = null; show(x); }
+  }, 10000);
 }
 async function load(manual) {
   const btns = document.querySelectorAll('.js-reload');
   if (manual) btns.forEach(b => { b.textContent = '查詢中…'; b.disabled = true; });
-  let shown = null;
-  // 1) 先畫 GitHub 已有的那份（同網域，很快），畫面不會卡在讀取中
-  const gh = fromGitHub().then(d => { if (!shown) { shown = d; render(d); } }).catch(() => {});
-  // 2) 再問 Worker；比較新就換上，太舊就請 GitHub 重抓
-  try {
-    const d = await fromWorker();
-    if (!shown || d.updated >= shown.updated) { shown = d; render(d); }
-    if (d.refreshing) { showRefreshing(); startPoll(d.updated); }
-  } catch (e) {
-    await gh;
-    if (!shown) {
+  // 三件事同時開始：風（最快，先給答案）、GitHub 上的上一份、請 Worker 去抓現在的飛機
+  const wP = windNow().then(w => { WIND = w; }).catch(() => {});
+  const gP = fromGitHub().catch(() => null);
+  const kP = fromWorker().catch(() => null);
+  const first = await gP;
+  await Promise.race([wP, new Promise(r => setTimeout(r, 1500))]);
+  if (first) show(first);
+  wP.then(() => { if (LAST) render(LAST); });
+  const d = await kP;
+  if (d) {
+    show(d);
+    if (d.refreshing || minsAgo(d.updated) > FRESH_MIN) startPoll(d.updated);
+  } else if (!first) {
+    await wP;
+    if (WIND) render(null);
+    else {
       document.getElementById('side').textContent = '讀取失敗';
       document.getElementById('why').textContent = '網路不穩的話，可以先用 Flightradar24 看一眼。';
     }
-  } finally {
-    btns.forEach(b => { b.textContent = '↻ 重新整理'; b.disabled = false; });
   }
+  btns.forEach(b => { b.textContent = '↻ 重新整理'; b.disabled = false; });
 }
 drawMap(null, []);   // 地圖先畫出來，不等資料
 // 嵌在文章裡時，把內容高度告訴外層頁面，讓 iframe 自動配合
