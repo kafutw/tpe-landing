@@ -345,6 +345,15 @@ const BASIS2 = {
   prior: '依現在的風向和稍早的起降方向判斷'
 };
 const FRESH_MIN = 10;   // 航機資料 10 分鐘內才算「現在」
+let UPDATING = false;
+function whenText(iso) {
+  const t = new Date(iso), now = new Date();
+  const day = x => x.toLocaleDateString('zh-TW', {timeZone: 'Asia/Taipei'});
+  if (day(t) === day(now)) return hhmm(iso);
+  const y = new Date(now.getTime() - 86400000);
+  if (day(t) === day(y)) return '昨天 ' + hhmm(iso);
+  return t.toLocaleDateString('zh-TW', {timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric'}) + ' ' + hhmm(iso);
+}
 let WIND = null;        // 打開頁面當下的風（Open-Meteo，瀏覽器直接抓，約 1 秒）
 async function windNow() {
   const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0777&longitude=121.2328&current=wind_direction_10m,wind_speed_10m&wind_speed_unit=kn', {cache: 'no-store'});
@@ -386,8 +395,14 @@ function render(d) {
     document.getElementById('spots').textContent = '';
     document.getElementById('why').textContent = '風很小、跑道附近也剛好沒有飛機，建議用 Flightradar24 看一眼降落的飛機從哪一邊進來。';
   }
-  const lb = BASIS2[k.basis];
-  document.getElementById('meta').innerHTML = lb ? `<span class="badge ${k.basis === 'mixed' ? 'warn' : ''}">${lb}</span>` : '';
+  // 他 10/20 裁決：一定要看得到飛機位置是幾點抓的，不然會以為就是現在
+  let meta = '';
+  if (k.fresh) meta = `<span class="badge ${k.basis === 'mixed' ? 'warn' : ''}">依 ${whenText(d.updated)} 在跑道附近起降的飛機判斷</span>`;
+  else {
+    if (BASIS2[k.basis]) meta += `<span class="badge">${BASIS2[k.basis]}</span>`;
+    if (d && d.updated) meta += `<span class="badge warn">飛機位置是 ${whenText(d.updated)} 抓的${UPDATING ? '，正在抓現在的飛機…' : '，按「重新整理」抓現在的'}</span>`;
+  }
+  document.getElementById('meta').innerHTML = meta;
 
   const ev = k.fresh ? (d.evidence || []) : [];
   const ul = document.getElementById('evidence');
@@ -421,17 +436,19 @@ async function fromWorker() {
 function show(d) { if (!LAST || d.updated >= LAST.updated) LAST = d; render(LAST); }
 function startPoll(before) {
   if (POLL) return;
+  UPDATING = true; if (LAST) render(LAST);
   let n = 0;
   POLL = setInterval(async () => {
     n++;
     let x; try { x = await fromWorker(); } catch (e) { try { x = await fromGitHub(); } catch (e2) { return; } }
-    if (x.updated !== before || n >= 18) { clearInterval(POLL); POLL = null; show(x); }
-  }, 10000);
+    if (x.updated !== before || n >= 18) { clearInterval(POLL); POLL = null; UPDATING = false; show(x); }
+  }, 8000);
 }
 async function load(manual) {
   const btns = document.querySelectorAll('.js-reload');
   if (manual) btns.forEach(b => { b.textContent = '查詢中…'; b.disabled = true; });
   // 三件事同時開始：風（最快，先給答案）、GitHub 上的上一份、請 Worker 去抓現在的飛機
+  UPDATING = true;
   const wP = windNow().then(w => { WIND = w; }).catch(() => {});
   const gP = fromGitHub().catch(() => null);
   const kP = fromWorker().catch(() => null);
@@ -441,9 +458,14 @@ async function load(manual) {
   wP.then(() => { if (LAST) render(LAST); });
   const d = await kP;
   if (d) {
+    const again = d.refreshing || minsAgo(d.updated) > FRESH_MIN;
+    if (!again) UPDATING = false;
     show(d);
-    if (d.refreshing || minsAgo(d.updated) > FRESH_MIN) startPoll(d.updated);
-  } else if (!first) {
+    if (again) startPoll(d.updated);
+  } else {
+    UPDATING = false; if (LAST) render(LAST);
+  }
+  if (!d && !first) {
     await wP;
     if (WIND) render(null);
     else {
