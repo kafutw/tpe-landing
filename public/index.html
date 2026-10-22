@@ -67,8 +67,8 @@ li{margin:4px 0}
 .zone .za{display:inline-block;margin-left:4px}
 .zv1 .zone,.zv2 .zone{font-size:20px;padding:8px 16px;border-radius:14px}
 .zv1 .zone .za,.zv2 .zone .za{font-size:28px;line-height:1;vertical-align:-3px;margin-left:6px}
-.zv2 .zone.ne .za{animation:zgo-ne 1.3s ease-in-out infinite}
-.zv2 .zone.sw .za{animation:zgo-sw 1.3s ease-in-out infinite}
+.zv2 .zone.zne .za{animation:zgo-ne 1.3s ease-in-out infinite}
+.zv2 .zone.zsw .za{animation:zgo-sw 1.3s ease-in-out infinite}
 @keyframes zgo-ne{0%{transform:translate(-4px,4px);opacity:.25}60%{transform:translate(4px,-4px);opacity:1}100%{transform:translate(4px,-4px);opacity:0}}
 @keyframes zgo-sw{0%{transform:translate(4px,-4px);opacity:.25}60%{transform:translate(-4px,4px);opacity:1}100%{transform:translate(-4px,4px);opacity:0}}
 .zv3 .zone{font-size:22px;padding:10px 20px;border-radius:999px;background:#2f6f76;box-shadow:0 0 0 4px rgba(255,255,255,.75),0 4px 12px rgba(0,0,0,.25)}
@@ -83,13 +83,13 @@ li{margin:4px 0}
 /* 10/22 第二輪：機場配色＋引導燈 */
 .zv5 .zone,.zv7 .zone{font-size:21px;padding:8px 16px;border-radius:6px;background:#f6c800;color:#111;box-shadow:0 0 0 2px #111,0 3px 10px rgba(0,0,0,.25)}
 .zv5 .zone .za{font-size:28px;font-weight:900;line-height:1;vertical-align:-3px;margin-left:8px}
-.zv5 .zone.ne .za{animation:zgo-ne 1.3s ease-in-out infinite}.zv5 .zone.sw .za{animation:zgo-sw 1.3s ease-in-out infinite}
+.zv5 .zone.zne .za{animation:zgo-ne 1.3s ease-in-out infinite}.zv5 .zone.zsw .za{animation:zgo-sw 1.3s ease-in-out infinite}
 .zv7 .zone .za{font-size:26px;font-weight:900;line-height:1;vertical-align:-3px;margin-left:4px;letter-spacing:-6px}
 .zv7 .zone .za i{font-style:normal;display:inline-block;animation:zflow 1.2s linear infinite;opacity:.2}
 .zv7 .zone .za i:nth-child(2){animation-delay:.2s}.zv7 .zone .za i:nth-child(3){animation-delay:.4s}
 .zv6 .zone{font-size:21px;padding:9px 18px;border-radius:999px;background:#1d2a3a;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.3)}
 .zv6 .zone .za{display:inline-flex;gap:5px;margin-left:12px;vertical-align:middle;transform:rotate(-45deg)}
-.zv6 .zone.sw .za{transform:rotate(135deg)}
+.zv6 .zone.zsw .za{transform:rotate(135deg)}
 .zv6 .zone .za b{width:8px;height:8px;border-radius:50%;background:#ffcf55;box-shadow:0 0 8px 2px #ffb81c;opacity:.15;animation:zlight 1s linear infinite}
 .zv6 .zone .za b:nth-child(2){animation-delay:.12s}.zv6 .zone .za b:nth-child(3){animation-delay:.24s}.zv6 .zone .za b:nth-child(4){animation-delay:.36s}.zv6 .zone .za b:nth-child(5){animation-delay:.48s}
 @keyframes zlight{0%,100%{opacity:.15}12%{opacity:1}30%{opacity:.15}}
@@ -357,7 +357,7 @@ function drawMap(rw, ev) {
     const zoneAt = nar
       ? MAP.containerPointToLatLng(rw === '05' ? [104, mapEl.clientHeight * 0.84] : [mapEl.clientWidth - 104, 26])
       : [zb[0] + 0.643 * (rw === '05' ? 1.2 : -1.9) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : -1.9) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
-    L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone ${rw === '05' ? 'ne' : 'sw'}">降落進來<span class="za">${(ZV === '4' || ZV === '7') ? ('<i>' + (rw === '05' ? '↗' : '↙') + '</i>').repeat(3) : ZV === '6' ? '<b></b>'.repeat(5) : (rw === '05' ? '↗' : '↙')}</span></div>`}), interactive: false}).addTo(LAYER);
+    L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone ${rw === '05' ? 'zne' : 'zsw'}">降落進來<span class="za">${(ZV === '4' || ZV === '7') ? ('<i>' + (rw === '05' ? '↗' : '↙') + '</i>').repeat(3) : ZV === '6' ? '<b></b>'.repeat(5) : (rw === '05' ? '↗' : '↙')}</span></div>`}), interactive: false}).addTo(LAYER);
   }
   RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
   SPOTS.forEach(([n, la, lo, side, pos, onTag]) => {
