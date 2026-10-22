@@ -97,6 +97,7 @@ li{margin:4px 0}
 .zv8 .zone .za{font-size:28px;line-height:1;vertical-align:-3px;margin-left:6px}
 .zv8 .gl{animation:zdash .9s linear infinite}
 @keyframes zdash{to{stroke-dashoffset:-15}}
+@media (max-width:520px){.zv7 .zone{font-size:17px;padding:6px 12px}.zv7 .zone .za{font-size:21px;letter-spacing:-5px}}
 @media (prefers-reduced-motion:reduce){.zone .za b,.gl{animation:none!important;opacity:1!important}}
 .legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:10px;font-size:13px;color:var(--sub)}
 .legend span{display:flex;align-items:center;gap:6px}
@@ -350,9 +351,12 @@ function drawMap(rw, ev) {
       L.polyline([far, t], {color: '#347E86', weight: 26, opacity: .22, lineCap: 'butt'}).addTo(LAYER);
       L.polyline([far, t], {color: '#347E86', weight: 3, dashArray: '8 7', opacity: .9, className: 'gl'}).addTo(LAYER);
     });
-    const nar = document.getElementById('map').clientWidth < 520;   // 手機地圖只框到跑道頭外 3 公里，標籤要拉近才不會被切
-    const zb = rw === '05' ? off([25.0668, 121.2198], nar ? -2.4 : -5.6) : off([25.0889, 121.2477], nar ? 1.4 : 2.2);
-    const zoneAt = [zb[0] + 0.643 * (rw === '05' ? 1.2 : -1.9) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : -1.9) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
+    const mapEl = document.getElementById('map'), nar = mapEl.clientWidth < 520;
+    const zb = rw === '05' ? off([25.0668, 121.2198], -5.6) : off([25.0889, 121.2477], 2.2);
+    // 手機地圖太窄，標籤放大後照經緯度放會被切、也會壓到看飛機的點：改成固定在畫面角落（降落進來的那一側）
+    const zoneAt = nar
+      ? MAP.containerPointToLatLng(rw === '05' ? [104, mapEl.clientHeight * 0.84] : [mapEl.clientWidth - 104, mapEl.clientHeight * 0.13])
+      : [zb[0] + 0.643 * (rw === '05' ? 1.2 : -1.9) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : -1.9) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
     L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone ${rw === '05' ? 'ne' : 'sw'}">降落進來<span class="za">${(ZV === '4' || ZV === '7') ? ('<i>' + (rw === '05' ? '↗' : '↙') + '</i>').repeat(3) : ZV === '6' ? '<b></b>'.repeat(5) : (rw === '05' ? '↗' : '↙')}</span></div>`}), interactive: false}).addTo(LAYER);
   }
   RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
