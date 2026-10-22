@@ -18,7 +18,7 @@
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');else h.classList.add('lay-a');h.classList.add('fl3');var z=(q.match(/[?&]zv=(\d)/)||[])[1]||'7';h.classList.add('zv'+z);window.ZV=z;})();</script>
+<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');else h.classList.add('lay-a');h.classList.add('fl3');var z=(q.match(/[?&]zv=(\d)/)||[])[1]||'7';h.classList.add('zv'+z);window.ZV=z;window.MV2=/[?&]mv=2/.test(q);if(window.MV2)h.classList.add('mv2');})();</script>
 <style>
 :root{--brand:#347E86;--brand-d:#245a60;--ink:#1f2a2c;--sub:#5b6a6c;--line:#dfe7e8;--bg:#f4f8f8;--card:#fff;--warn:#b5651d;--off:#c9d3d4}
 *{box-sizing:border-box}
@@ -97,6 +97,10 @@ li{margin:4px 0}
 .zv8 .zone .za{font-size:28px;line-height:1;vertical-align:-3px;margin-left:6px}
 .zv8 .gl{animation:zdash .9s linear infinite}
 @keyframes zdash{to{stroke-dashoffset:-15}}
+/* mv2：精簡版地圖（10/22 他嫌亂）*/
+.rwno{transform:translate(-50%,-50%);width:max-content;font-size:12px;font-weight:900;color:#2e3a3b;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.aptx{transform:translate(-50%,-50%);width:max-content;white-space:nowrap;font-size:14px;font-weight:800;letter-spacing:.2em;color:#5d6a6b;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 4px #fff}
+.pin.sm{width:9px;height:9px;margin:-4.5px 0 0 -4.5px}
 .apt{transform:translate(-50%,-50%);width:max-content;white-space:nowrap;font-size:15px;font-weight:800;color:#2b3536;background:rgba(255,255,255,.94);border:2px solid #3c4a4c;border-radius:8px;padding:3px 10px;letter-spacing:.06em;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 @media (max-width:520px){.apt{font-size:13px;padding:2px 8px}}
 @media (max-width:520px){.zv7 .zone{font-size:17px;padding:6px 12px}.zv7 .zone .za{font-size:21px;letter-spacing:-5px}}
@@ -372,10 +376,12 @@ function drawMap(rw, ev) {
   LAYER = L.layerGroup().addTo(MAP);
   // 機場範圍：兩條跑道外面圍一圈淺灰底＋虛線框，中間放名牌，讓人一眼知道機場在哪（10/22 他說看不出機場在哪）
   const N = RWY[0], S = RWY[1];
-  L.polygon([off(perp(N[0], 0.75), -0.6), off(perp(N[1], 0.75), 0.6), off(perp(S[1], -0.75), 0.6), off(perp(S[0], -0.75), -0.6)],
-    {color: '#3c4a4c', weight: 1.5, dashArray: '5 5', fillColor: '#d9e2e3', fillOpacity: .55, interactive: false}).addTo(LAYER);
-  const mid = [(N[0][0] + N[1][0] + S[0][0] + S[1][0]) / 4, (N[0][1] + N[1][1] + S[0][1] + S[1][1]) / 4];
-  L.marker(perp(off(mid, -1.3), -0.45), {icon: L.divIcon({className: '', iconSize: [0, 0], html: '<div class="apt">✈ 桃園國際機場</div>'}), interactive: false, zIndexOffset: 800}).addTo(LAYER);
+  if (!MV2) {
+    L.polygon([off(perp(N[0], 0.75), -0.6), off(perp(N[1], 0.75), 0.6), off(perp(S[1], -0.75), 0.6), off(perp(S[0], -0.75), -0.6)],
+      {color: '#3c4a4c', weight: 1.5, dashArray: '5 5', fillColor: '#d9e2e3', fillOpacity: .55, interactive: false}).addTo(LAYER);
+    const mid = [(N[0][0] + N[1][0] + S[0][0] + S[1][0]) / 4, (N[0][1] + N[1][1] + S[0][1] + S[1][1]) / 4];
+    L.marker(perp(off(mid, -1.3), -0.45), {icon: L.divIcon({className: '', iconSize: [0, 0], html: '<div class="apt">✈ 桃園國際機場</div>'}), interactive: false, zIndexOffset: 800}).addTo(LAYER);
+  }
   const heading = rw === '23' ? 230 : 50;
   const pts = SPOTS.map(x => [x[1], x[2]]);
   if (rw === '05') pts.push(off(RWY[0][0], -4.2), off(RWY[1][0], -4.2));
@@ -407,11 +413,22 @@ function drawMap(rw, ev) {
     ZONE._w = zel.offsetWidth; ZONE._h = zel.offsetHeight;
     if (!MAP._zbind) { MAP.on('zoomend moveend resize', placeZone); MAP._zbind = 1; }
   } else ZONE = null;
-  RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
+  RWY.forEach(r => L.polyline(r, {color: MV2 ? '#2e3a3b' : '#3c4a4c', weight: MV2 ? 13 : 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
+  if (MV2) {   // 跑道兩頭標跑道編號，跑道旁一行淡灰字寫機場名，不加框
+    [['05L', RWY[0][0], -0.45], ['23R', RWY[0][1], 0.45], ['05R', RWY[1][0], -0.45], ['23L', RWY[1][1], 0.45]].forEach(([t, p, k]) =>
+      L.marker(off(p, k), {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="rwno">${t}</div>`}), interactive: false}).addTo(LAYER));
+    const ms = [(RWY[1][0][0] + RWY[1][1][0]) / 2, (RWY[1][0][1] + RWY[1][1][1]) / 2];
+    L.marker(perp(off(ms, 0.9), -0.85), {icon: L.divIcon({className: '', iconSize: [0, 0], html: '<div class="aptx">桃園機場</div>'}), interactive: false}).addTo(LAYER);
+  }
   SPOTS.forEach(([n, la, lo, side, pos, onTag]) => {
     const cls = !side ? 'mid' : (rw && side === rw ? 'on' : (rw ? 'off' : 'mid'));
-    const tag = cls === 'on' ? (onTag || '看降落') : '';
+    const tag = MV2 ? '' : (cls === 'on' ? (onTag || '看降落') : '');
     const dot = cls === 'on' ? '#347E86' : (cls === 'off' ? '#c9d3d4' : '#fff');
+    if (MV2 && cls === 'off') {   // 今天看不到降落的那一側：只留灰色小點，點一下才顯示名字
+      L.marker([la, lo], {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<i class="pin sm" style="background:${dot}"></i>`})})
+        .bindTooltip(n, {direction: 'top', offset: [0, -6]}).addTo(LAYER);
+      return;
+    }
     L.marker([la, lo], {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<i class="pin" style="background:${dot}${cls === 'mid' ? ';box-shadow:0 0 0 3px #347E86' : ''}"></i><div class="lb ${cls} ${pos}">${n}${tag ? '<small>' + tag + '</small>' : ''}</div>`})}).addTo(LAYER);
   });
   (ev || []).filter(e => e.lat).forEach(e => {
@@ -421,7 +438,7 @@ function drawMap(rw, ev) {
       : big ? `<b>${land ? '⬇ 降落中' : '⬆ 起飛中'}</b><small>${al ? al + ' ' : ''}${e.flight || ''}・${Math.round(e.alt_ft * 0.3048)} 公尺</small>`
       : `${e.flight || '飛機'}${al ? ' ' + al : ''}・${land ? '降落' : '起飛'}`;
     L.marker([e.lat, e.lon], {icon: planeIcon(e.track, land ? '#e07a1f' : '#5b6f8c', big ? 34 : 26), zIndexOffset: 1000})
-      .bindTooltip(txt, {permanent: true, direction: big ? 'bottom' : 'right', offset: big ? [0, 14] : [12, 0], className: 'fl' + (land ? '' : ' to')}).addTo(LAYER);
+      .bindTooltip(MV2 ? `${e.flight || '飛機'}・${land ? '降落中' : '起飛中'}・${Math.round(e.alt_ft * 0.3048)} 公尺` : txt, {permanent: !MV2, direction: big ? 'bottom' : 'right', offset: big ? [0, 14] : [12, 0], className: 'fl' + (land ? '' : ' to')}).addTo(LAYER);
   });
   placeZone();   // 所有名牌都畫好之後再放，才閃得開
 }
