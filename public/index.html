@@ -18,7 +18,7 @@
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');else h.classList.add('lay-a');h.classList.add('fl3');var z=(q.match(/[?&]zv=(\d)/)||[])[1]||'7';h.classList.add('zv'+z);window.ZV=z;window.MV2=/[?&]mv=2/.test(q);if(window.MV2)h.classList.add('mv2');})();</script>
+<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');else h.classList.add('lay-a');h.classList.add('fl3');var z=(q.match(/[?&]zv=(\d)/)||[])[1]||'7';h.classList.add('zv'+z);window.ZV=z;window.MV2=!/[?&]mv=1/.test(q);if(window.MV2)h.classList.add('mv2');})();</script>
 <style>
 :root{--brand:#347E86;--brand-d:#245a60;--ink:#1f2a2c;--sub:#5b6a6c;--line:#dfe7e8;--bg:#f4f8f8;--card:#fff;--warn:#b5651d;--off:#c9d3d4}
 *{box-sizing:border-box}
@@ -365,6 +365,25 @@ function placeZone() {
   }
   ZONE.setLatLng(MAP.containerPointToLatLng([cx, cy]));
 }
+// 名牌超出地圖邊緣就往內挪：左右兩側的名牌換到另一邊，上下的名牌整塊往內推（10/22 手機上大園 101、華興池被切一半）
+function fitLabels() {
+  const el = document.getElementById('map'); if (!el) return;
+  const mr = el.getBoundingClientRect(), pad = 4;
+  el.querySelectorAll('.lb').forEach(b => {
+    const o = b.dataset.pos || (b.dataset.pos = ['r', 'l', 'a', 'b'].find(c => b.classList.contains(c)));
+    b.classList.remove('r', 'l', 'a', 'b'); b.classList.add(o); b.style.marginLeft = b.style.marginTop = b.style.visibility = '';
+    const pin = b.previousElementSibling.getBoundingClientRect();
+    const px = pin.left + pin.width / 2 - mr.left, py = pin.top + pin.height / 2 - mr.top;
+    if (px < 0 || px > mr.width || py < 0 || py > mr.height) { b.style.visibility = 'hidden'; return; }   // 點不在畫面裡，名牌也藏起來，不要露半截
+    let r = b.getBoundingClientRect();
+    if (o === 'l' && r.left - mr.left < pad) { b.classList.replace('l', 'r'); r = b.getBoundingClientRect(); }
+    if (o === 'r' && r.right - mr.left > mr.width - pad) { b.classList.replace('r', 'l'); r = b.getBoundingClientRect(); }
+    const dx = Math.max(0, pad - (r.left - mr.left)) - Math.max(0, (r.right - mr.left) - (mr.width - pad));
+    const dy = Math.max(0, pad - (r.top - mr.top)) - Math.max(0, (r.bottom - mr.top) - (mr.height - pad));
+    if (dx) b.style.marginLeft = dx + 'px';
+    if (dy) b.style.marginTop = dy + 'px';
+  });
+}
 function drawMap(rw, ev) {
   if (!window.L) return;
   if (!MAP) {
@@ -411,7 +430,7 @@ function drawMap(rw, ev) {
     ZONE._rw = rw;
     const zel = ZONE.getElement().querySelector('.zone');
     ZONE._w = zel.offsetWidth; ZONE._h = zel.offsetHeight;
-    if (!MAP._zbind) { MAP.on('zoomend moveend resize', placeZone); MAP._zbind = 1; }
+    if (!MAP._zbind) { MAP.on('zoomend moveend resize', () => { fitLabels(); placeZone(); }); MAP._zbind = 1; }
   } else ZONE = null;
   RWY.forEach(r => L.polyline(r, {color: MV2 ? '#2e3a3b' : '#3c4a4c', weight: MV2 ? 13 : 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
   if (MV2) {   // 跑道旁一行淡灰字寫機場名，不加框（跑道編號試過，會跟看飛機的點的名牌打架，拿掉）
@@ -438,6 +457,7 @@ function drawMap(rw, ev) {
     L.marker([e.lat, e.lon], {icon: planeIcon(e.track, land ? '#e07a1f' : '#5b6f8c', big ? 34 : 26), zIndexOffset: 1000})
       .bindTooltip(MV2 ? `${e.flight || '飛機'}・${land ? '降落中' : '起飛中'}・${Math.round(e.alt_ft * 0.3048)} 公尺` : txt, {permanent: !MV2, direction: big ? 'bottom' : 'right', offset: big ? [0, 14] : [12, 0], className: 'fl' + (land ? '' : ' to')}).addTo(LAYER);
   });
+  fitLabels();
   placeZone();   // 所有名牌都畫好之後再放，才閃得開
 }
 
