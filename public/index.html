@@ -351,6 +351,14 @@ function placeZone() {
     if (cy + lh / 2 < H - pad - 1 && n.y > 0.15) cy += gap / n.y; else cx += gap / (n.x || 1e-6);
     clamp();
   }
+  // 碰到看飛機的點的名牌，就往離航道更遠的方向挪開（最多挪 30 次、每次 8px）
+  const mr = el.getBoundingClientRect();
+  const boxes = [...el.querySelectorAll('.lb, .apt')].map(b => { const r2 = b.getBoundingClientRect(); return {l: r2.left - mr.left, t: r2.top - mr.top, r: r2.right - mr.left, b: r2.bottom - mr.top}; });
+  const hit = () => boxes.some(b => cx - lw / 2 < b.r + 4 && cx + lw / 2 > b.l - 4 && cy - lh / 2 < b.b + 4 && cy + lh / 2 > b.t - 4);
+  for (let k = 0; k < 30 && hit(); k++) {
+    if (cy + lh / 2 < H - pad - 1) cy += 8; else cx += (n.x >= 0 ? -8 : 8);
+    clamp();
+  }
   ZONE.setLatLng(MAP.containerPointToLatLng([cx, cy]));
 }
 function drawMap(rw, ev) {
@@ -397,7 +405,6 @@ function drawMap(rw, ev) {
     ZONE._rw = rw;
     const zel = ZONE.getElement().querySelector('.zone');
     ZONE._w = zel.offsetWidth; ZONE._h = zel.offsetHeight;
-    placeZone();
     if (!MAP._zbind) { MAP.on('zoomend moveend resize', placeZone); MAP._zbind = 1; }
   } else ZONE = null;
   RWY.forEach(r => L.polyline(r, {color: '#3c4a4c', weight: 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
@@ -416,6 +423,7 @@ function drawMap(rw, ev) {
     L.marker([e.lat, e.lon], {icon: planeIcon(e.track, land ? '#e07a1f' : '#5b6f8c', big ? 34 : 26), zIndexOffset: 1000})
       .bindTooltip(txt, {permanent: true, direction: big ? 'bottom' : 'right', offset: big ? [0, 14] : [12, 0], className: 'fl' + (land ? '' : ' to')}).addTo(LAYER);
   });
+  placeZone();   // 所有名牌都畫好之後再放，才閃得開
 }
 
 // 判斷依據只講「看什麼判斷的」，不講多久以前更新（他 10/19 裁決：講時間反而誤會）
