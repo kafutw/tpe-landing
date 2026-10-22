@@ -341,10 +341,16 @@ function placeZone() {
   let n = {x: -d.y, y: d.x};                              // 垂直方向，挑外側那一邊
   if (n.y < 0) n = {x: -n.x, y: -n.y};
   const half = Math.abs(n.x) * lw / 2 + Math.abs(n.y) * lh / 2;
-  let cx = E.x + d.x * (lw / 2 + 12) + n.x * (13 + 12 + half);
-  let cy = E.y + d.y * (lw / 2 + 12) + n.y * (13 + 12 + half);
-  cx = Math.min(Math.max(cx, pad + lw / 2), W - pad - lw / 2);
-  cy = Math.min(Math.max(cy, pad + lh / 2), H - pad - lh / 2);
+  const need = 13 + 12 + half;                            // 標籤中心離航道中線至少要這麼遠
+  const clamp = () => { cx = Math.min(Math.max(cx, pad + lw / 2), W - pad - lw / 2); cy = Math.min(Math.max(cy, pad + lh / 2), H - pad - lh / 2); };
+  let cx = E.x + n.x * need, cy = E.y + n.y * need;
+  clamp();
+  for (let k = 0; k < 3; k++) {                          // 被畫面邊緣推回去的話，往另一個方向補足距離
+    const gap = need - ((cx - E.x) * n.x + (cy - E.y) * n.y);
+    if (gap <= 1) break;
+    if (cy + lh / 2 < H - pad - 1 && n.y > 0.15) cy += gap / n.y; else cx += gap / (n.x || 1e-6);
+    clamp();
+  }
   ZONE.setLatLng(MAP.containerPointToLatLng([cx, cy]));
 }
 function drawMap(rw, ev) {
