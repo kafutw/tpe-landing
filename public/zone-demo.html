@@ -1,0 +1,37 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>降落進來標籤範本</title>
+<style>
+body{margin:0;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:#f4f8f8;color:#222730}
+main{max-width:1100px;margin:0 auto;padding:24px 16px} h1{font-size:22px;margin:0 0 6px} .lead{color:#555;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card .h{font-weight:800;font-size:17px;margin-bottom:8px} .card p{font-size:14px;color:#555;margin:8px 2px 0}
+.map{position:relative;height:200px;border-radius:10px;overflow:hidden;background:#e9eaec repeating-linear-gradient(35deg,transparent 0 38px,rgba(255,255,255,.7) 38px 40px)}
+.corr{position:absolute;left:-20%;top:58%;width:140%;height:26px;background:rgba(52,126,134,.22);transform:rotate(-40deg);transform-origin:center}
+.corr::after{content:"";position:absolute;left:0;right:0;top:12px;border-top:3px dashed rgba(52,126,134,.9)}
+.corr.c2{top:85%;left:5%}
+.lab{position:absolute;left:42%;top:42%}
+.zone{display:inline-block;width:max-content;font-size:14px;font-weight:800;color:#fff;background:rgba(52,126,134,.92);padding:5px 11px;border-radius:10px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);transform:translate(-50%,-50%)}
+/* 10/22 降落進來標籤：四個範本（?zv=1~4 試看），他挑定後改成預設 */
+.zone .za{display:inline-block;margin-left:4px}
+.zv1 .zone,.zv2 .zone{font-size:20px;padding:8px 16px;border-radius:14px}
+.zv1 .zone .za,.zv2 .zone .za{font-size:28px;line-height:1;vertical-align:-3px;margin-left:6px}
+.zv2 .zone.ne .za{animation:zgo-ne 1.3s ease-in-out infinite}
+.zv2 .zone.sw .za{animation:zgo-sw 1.3s ease-in-out infinite}
+@keyframes zgo-ne{0%{transform:translate(-4px,4px);opacity:.25}60%{transform:translate(4px,-4px);opacity:1}100%{transform:translate(4px,-4px);opacity:0}}
+@keyframes zgo-sw{0%{transform:translate(4px,-4px);opacity:.25}60%{transform:translate(-4px,4px);opacity:1}100%{transform:translate(-4px,4px);opacity:0}}
+.zv3 .zone{font-size:22px;padding:10px 20px;border-radius:999px;background:#2f6f76;box-shadow:0 0 0 4px rgba(255,255,255,.75),0 4px 12px rgba(0,0,0,.25)}
+.zv3 .zone .za{font-size:30px;line-height:1;vertical-align:-4px;margin-left:8px;animation:zpulse 1.2s ease-in-out infinite}
+@keyframes zpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.zv4 .zone{font-size:21px;padding:8px 14px 8px 18px;border-radius:14px}
+.zv4 .zone .za{font-size:26px;line-height:1;vertical-align:-3px;margin-left:2px;letter-spacing:-6px}
+.zv4 .zone .za i{font-style:normal;display:inline-block;animation:zflow 1.2s linear infinite;opacity:.2}
+.zv4 .zone .za i:nth-child(2){animation-delay:.2s}.zv4 .zone .za i:nth-child(3){animation-delay:.4s}
+@keyframes zflow{0%,100%{opacity:.2}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.zone .za,.zone .za i{animation:none!important;opacity:1!important}}
+</style></head><body><main><h1>「降落進來」標籤：四個範本</h1><p class="lead">底色是示意地圖，標籤的字級、顏色、動畫跟查詢頁一模一樣。手機也可以直接開這頁看。</p><div class="grid">
+<div class="card zv0"><div class="h">原版（現在）</div><div class="map"><div class="corr"></div><div class="corr c2"></div><div class="lab"><div class="zone ne">降落進來<span class="za">↗</span></div></div></div><p>14px，箭頭跟字一樣大</p></div>
+<div class="card zv1"><div class="h">1｜放大</div><div class="map"><div class="corr"></div><div class="corr c2"></div><div class="lab"><div class="zone ne">降落進來<span class="za">↗</span></div></div></div><p>字 20px、箭頭 28px，不加動畫</p></div>
+<div class="card zv2"><div class="h">2｜放大＋箭頭往前滑</div><div class="map"><div class="corr"></div><div class="corr c2"></div><div class="lab"><div class="zone ne">降落進來<span class="za">↗</span></div></div></div><p>箭頭沿著降落方向一直往前滑、淡出再出現</p></div>
+<div class="card zv3"><div class="h">3｜膠囊白框＋箭頭跳動</div><div class="map"><div class="corr"></div><div class="corr c2"></div><div class="lab"><div class="zone ne">降落進來<span class="za">↗</span></div></div></div><p>字 22px、圓角膠囊加白外框，箭頭一放一縮</p></div>
+<div class="card zv4"><div class="h">4｜三個箭頭流動</div><div class="map"><div class="corr"></div><div class="corr c2"></div><div class="lab"><div class="zone ne">降落進來<span class="za"><i>↗</i><i>↗</i><i>↗</i></span></div></div></div><p>三個箭頭依序亮起，像在指路</p></div>
+</div></main></body></html>
