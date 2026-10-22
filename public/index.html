@@ -18,7 +18,7 @@
 <meta property="og:description" content="看飛機出發前先查一次：今天該去西南側還是東北側。">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');else h.classList.add('lay-a');h.classList.add('fl3');var z=(q.match(/[?&]zv=(\d)/)||[])[1];if(z)h.classList.add('zv'+z);window.ZV=z||'';})();</script>
+<script>(function(){var q=location.search,h=document.documentElement;if(/[?&]embed=1/.test(q))h.classList.add('embed');else h.classList.add('lay-a');h.classList.add('fl3');var z=(q.match(/[?&]zv=(\d)/)||[])[1]||'7';h.classList.add('zv'+z);window.ZV=z;})();</script>
 <style>
 :root{--brand:#347E86;--brand-d:#245a60;--ink:#1f2a2c;--sub:#5b6a6c;--line:#dfe7e8;--bg:#f4f8f8;--card:#fff;--warn:#b5651d;--off:#c9d3d4}
 *{box-sizing:border-box}
@@ -63,7 +63,7 @@ li{margin:4px 0}
 .dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 .zone{display:inline-block;width:max-content;font-size:14px;font-weight:800;color:#fff;background:rgba(52,126,134,.92);padding:5px 11px;border-radius:10px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);transform:translate(-50%,-50%)}
 .zone.dep{background:rgba(110,124,126,.85);font-size:12.5px;font-weight:700}
-/* 10/22 降落進來標籤：四個範本（?zv=1~4 試看），他挑定後改成預設 */
+/* 10/22 降落進來標籤：他選 7（機場指示牌黃＋三個箭頭流動）當預設；其他範本留著，?zv=N 可切回比較 */
 .zone .za{display:inline-block;margin-left:4px}
 .zv1 .zone,.zv2 .zone{font-size:20px;padding:8px 16px;border-radius:14px}
 .zv1 .zone .za,.zv2 .zone .za{font-size:28px;line-height:1;vertical-align:-3px;margin-left:6px}
