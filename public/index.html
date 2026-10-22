@@ -350,7 +350,8 @@ function drawMap(rw, ev) {
       L.polyline([far, t], {color: '#347E86', weight: 26, opacity: .22, lineCap: 'butt'}).addTo(LAYER);
       L.polyline([far, t], {color: '#347E86', weight: 3, dashArray: '8 7', opacity: .9, className: 'gl'}).addTo(LAYER);
     });
-    const zb = rw === '05' ? off([25.0668, 121.2198], -5.6) : off([25.0889, 121.2477], 2.2);
+    const nar = document.getElementById('map').clientWidth < 520;   // 手機地圖只框到跑道頭外 3 公里，標籤要拉近才不會被切
+    const zb = rw === '05' ? off([25.0668, 121.2198], nar ? -2.4 : -5.6) : off([25.0889, 121.2477], nar ? 1.4 : 2.2);
     const zoneAt = [zb[0] + 0.643 * (rw === '05' ? 1.2 : -1.9) / 111.2, zb[1] - 0.766 * (rw === '05' ? 1.2 : -1.9) / (111.2 * Math.cos(25.07 * Math.PI / 180))];
     L.marker(zoneAt, {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone ${rw === '05' ? 'ne' : 'sw'}">降落進來<span class="za">${(ZV === '4' || ZV === '7') ? ('<i>' + (rw === '05' ? '↗' : '↙') + '</i>').repeat(3) : ZV === '6' ? '<b></b>'.repeat(5) : (rw === '05' ? '↗' : '↙')}</span></div>`}), interactive: false}).addTo(LAYER);
   }
