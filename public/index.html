@@ -414,9 +414,7 @@ function drawMap(rw, ev) {
     if (!MAP._zbind) { MAP.on('zoomend moveend resize', placeZone); MAP._zbind = 1; }
   } else ZONE = null;
   RWY.forEach(r => L.polyline(r, {color: MV2 ? '#2e3a3b' : '#3c4a4c', weight: MV2 ? 13 : 9, opacity: .9, lineCap: 'round'}).addTo(LAYER));
-  if (MV2) {   // 跑道兩頭標跑道編號，跑道旁一行淡灰字寫機場名，不加框
-    [['05L', RWY[0][0], -0.45], ['23R', RWY[0][1], 0.45], ['05R', RWY[1][0], -0.45], ['23L', RWY[1][1], 0.45]].forEach(([t, p, k]) =>
-      L.marker(off(p, k), {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="rwno">${t}</div>`}), interactive: false}).addTo(LAYER));
+  if (MV2) {   // 跑道旁一行淡灰字寫機場名，不加框（跑道編號試過，會跟看飛機的點的名牌打架，拿掉）
     const ms = [(RWY[1][0][0] + RWY[1][1][0]) / 2, (RWY[1][0][1] + RWY[1][1][1]) / 2];
     L.marker(perp(off(ms, 0.9), -0.85), {icon: L.divIcon({className: '', iconSize: [0, 0], html: '<div class="aptx">桃園機場</div>'}), interactive: false}).addTo(LAYER);
   }
