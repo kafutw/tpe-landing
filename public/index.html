@@ -328,7 +328,7 @@ function placeZone() {
   if (!ZONE || !MAP) return;
   const el = document.getElementById('map'), W = el.clientWidth, H = el.clientHeight;
   const rw = ZONE._rw, lw = ZONE._w || 180, lh = ZONE._h || 40, pad = 8;
-  const r = rw === '05' ? RWY[1] : RWY[0];               // 外側那條：05 用南跑道、23 用北跑道
+  const r = RWY[1];   // 一律用南跑道那條、放在它的東南側：西北側是海邊，看飛機的點都擠在那裡
   const a = MAP.latLngToContainerPoint(rw === '05' ? off(r[0], -6.5) : off(r[1], 6.5));
   const b = MAP.latLngToContainerPoint(rw === '05' ? r[0] : r[1]);
   let E = null;
@@ -339,7 +339,7 @@ function placeZone() {
   if (!E) E = {x: b.x, y: b.y};
   const len = Math.hypot(b.x - a.x, b.y - a.y) || 1, d = {x: (b.x - a.x) / len, y: (b.y - a.y) / len};
   let n = {x: -d.y, y: d.x};                              // 垂直方向，挑外側那一邊
-  if ((rw === '05' && n.y < 0) || (rw === '23' && n.y > 0)) n = {x: -n.x, y: -n.y};
+  if (n.y < 0) n = {x: -n.x, y: -n.y};
   const half = Math.abs(n.x) * lw / 2 + Math.abs(n.y) * lh / 2;
   let cx = E.x + d.x * (lw / 2 + 12) + n.x * (13 + 12 + half);
   let cy = E.y + d.y * (lw / 2 + 12) + n.y * (13 + 12 + half);
@@ -361,7 +361,7 @@ function drawMap(rw, ev) {
   L.polygon([off(perp(N[0], 0.75), -0.6), off(perp(N[1], 0.75), 0.6), off(perp(S[1], -0.75), 0.6), off(perp(S[0], -0.75), -0.6)],
     {color: '#3c4a4c', weight: 1.5, dashArray: '5 5', fillColor: '#d9e2e3', fillOpacity: .55, interactive: false}).addTo(LAYER);
   const mid = [(N[0][0] + N[1][0] + S[0][0] + S[1][0]) / 4, (N[0][1] + N[1][1] + S[0][1] + S[1][1]) / 4];
-  L.marker(off(mid, -1.5), {icon: L.divIcon({className: '', iconSize: [0, 0], html: '<div class="apt">✈ 桃園國際機場</div>'}), interactive: false, zIndexOffset: -500}).addTo(LAYER);
+  L.marker(perp(off(mid, -1.3), -0.45), {icon: L.divIcon({className: '', iconSize: [0, 0], html: '<div class="apt">✈ 桃園國際機場</div>'}), interactive: false, zIndexOffset: 800}).addTo(LAYER);
   const heading = rw === '23' ? 230 : 50;
   const pts = SPOTS.map(x => [x[1], x[2]]);
   if (rw === '05') pts.push(off(RWY[0][0], -4.2), off(RWY[1][0], -4.2));
@@ -387,7 +387,7 @@ function drawMap(rw, ev) {
       L.polyline([far, t], {color: '#347E86', weight: 26, opacity: .22, lineCap: 'butt'}).addTo(LAYER);
       L.polyline([far, t], {color: '#347E86', weight: 3, dashArray: '8 7', opacity: .9, className: 'gl'}).addTo(LAYER);
     });
-    ZONE = L.marker(MAP.getCenter(), {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone ${rw === '05' ? 'zne' : 'zsw'}">降落進來<span class="za">${(ZV === '4' || ZV === '7') ? ('<i>' + (rw === '05' ? '↗' : '↙') + '</i>').repeat(3) : ZV === '6' ? '<b></b>'.repeat(5) : (rw === '05' ? '↗' : '↙')}</span></div>`}), interactive: false}).addTo(LAYER);
+    ZONE = L.marker(MAP.getCenter(), {icon: L.divIcon({className: '', iconSize: [0, 0], html: `<div class="zone ${rw === '05' ? 'zne' : 'zsw'}">降落進來<span class="za">${(ZV === '4' || ZV === '7') ? ('<i>' + (rw === '05' ? '↗' : '↙') + '</i>').repeat(3) : ZV === '6' ? '<b></b>'.repeat(5) : (rw === '05' ? '↗' : '↙')}</span></div>`}), interactive: false, zIndexOffset: 900}).addTo(LAYER);
     ZONE._rw = rw;
     const zel = ZONE.getElement().querySelector('.zone');
     ZONE._w = zel.offsetWidth; ZONE._h = zel.offsetHeight;
